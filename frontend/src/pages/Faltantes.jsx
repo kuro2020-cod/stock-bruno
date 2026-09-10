@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useRef, Fragment } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ClipboardList,
   CheckCircle2,
@@ -15,7 +15,6 @@ import { categoriasAPI, faltantesAPI, productosAPI, reporteFaltantesAPI } from '
 import CategoriaProductoSelect from '../components/CategoriaProductoSelect'
 import { hoyLocalISO } from '../utils/fechas'
 import { fmtCantidadStock } from '../utils/unidades'
-import { esProductoSistema } from '../utils/stockProducto'
 import { useAuth } from '../context/AuthContext'
 
 const STOCK_PAGE_SIZE = 10
@@ -28,15 +27,8 @@ const cantidadFaltanteLabel = (row) => {
     const n = Number(row.cantidad)
     if (Number.isFinite(n)) return fmtCantidadStock(n, row.producto_unidad || 'unidad')
   }
-  if (row?.producto_stock != null) {
-    const n = Number(row.producto_stock)
-    if (Number.isFinite(n)) return fmtCantidadStock(n, row.producto_unidad || 'unidad')
-  }
   return '—'
 }
-
-const categoriaFaltante = (row) =>
-  String(row?.categoria_nombre || '').trim() || 'Sin categoría'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -65,13 +57,8 @@ const Faltantes = () => {
   const [lista, setLista] = useState([])
   const [loading, setLoading] = useState(false)
   const [mensaje, setMensaje] = useState(null)
-  const [productos, setProductos] = useState([])
-  const [busquedaProd, setBusquedaProd] = useState('')
-  const [productoSel, setProductoSel] = useState(null)
   const [productoTexto, setProductoTexto] = useState('')
-  const [prodHighlightIdx, setProdHighlightIdx] = useState(-1)
   const [guardando, setGuardando] = useState(false)
-  const listaProdRef = useRef(null)
 
   const [stockBajo, setStockBajo] = useState([])
   const [categorias, setCategorias] = useState([])
@@ -96,6 +83,7 @@ const Faltantes = () => {
       const { data } = await faltantesAPI.listar({
         desde: desde || undefined,
         hasta: hasta || undefined,
+        solo_manual: 1,
         limit: 1000
       })
       setLista(Array.isArray(data) ? data : [])
@@ -129,80 +117,15 @@ const Faltantes = () => {
     }
   }, [])
 
-  const loadProductos = useCallback(async () => {
-    try {
-      const { data } = await productosAPI.getAll()
-      setProductos(Array.isArray(data) ? data : [])
-    } catch (e) {
-      console.error(e)
-    }
-  }, [])
-
   useEffect(() => {
     if (tab === 'registros') {
       loadLista()
-      loadProductos()
     }
-  }, [tab, loadLista, loadProductos])
+  }, [tab, loadLista])
 
   useEffect(() => {
     if (tab === 'stock_bajo') loadStockBajo()
   }, [tab, loadStockBajo])
-
-  const productosFiltrados = useMemo(() => {
-    const q = busquedaProd.trim().toLowerCase()
-    let list = productos.filter((p) => !esProductoSistema(p))
-    if (q) {
-      list = list.filter((p) => {
-        const codigo = String(p.codigo || '').toLowerCase()
-        const nombre = String(p.nombre || '').toLowerCase()
-        return codigo.includes(q) || nombre.includes(q)
-      })
-    }
-    return list.slice(0, 40)
-  }, [productos, busquedaProd])
-
-  useEffect(() => {
-    setProdHighlightIdx(-1)
-  }, [busquedaProd])
-
-  useEffect(() => {
-    if (prodHighlightIdx < 0 || !listaProdRef.current) return
-    const el = listaProdRef.current.querySelector(`[data-prod-idx="${prodHighlightIdx}"]`)
-    if (el && typeof el.scrollIntoView === 'function') {
-      el.scrollIntoView({ block: 'nearest' })
-    }
-  }, [prodHighlightIdx])
-
-  const elegirProducto = (p) => {
-    setProductoSel(p)
-    setProductoTexto(p.nombre || '')
-    setBusquedaProd('')
-    setProdHighlightIdx(-1)
-  }
-
-  const limpiarProductoSel = () => {
-    setProductoSel(null)
-    setProductoTexto('')
-  }
-
-  const onBusquedaProdKeyDown = (e) => {
-    if (productosFiltrados.length === 0) return
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setProdHighlightIdx((i) => (i < productosFiltrados.length - 1 ? i + 1 : 0))
-      return
-    }
-    if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setProdHighlightIdx((i) => (i <= 0 ? productosFiltrados.length - 1 : i - 1))
-      return
-    }
-    if (e.key === 'Enter' && prodHighlightIdx >= 0 && productosFiltrados[prodHighlightIdx]) {
-      e.preventDefault()
-      elegirProducto(productosFiltrados[prodHighlightIdx])
-    }
-  }
 
   const stockBajoFiltrado = useMemo(() => {
     const q = busquedaStock.trim().toLowerCase()
@@ -224,22 +147,13 @@ const Faltantes = () => {
     setPaginaStock(1)
   }, [busquedaStock, stockBajo])
 
-  const listaPorCategoria = useMemo(() => {
-    const map = new Map()
-    for (const row of lista) {
-      const cat = categoriaFaltante(row)
-      if (!map.has(cat)) map.set(cat, [])
-      map.get(cat).push(row)
-    }
-    return [...map.entries()]
-      .sort(([a], [b]) => a.localeCompare(b, 'es', { sensitivity: 'base' }))
-      .map(([categoria, items]) => ({
-        categoria,
-        items: items.slice().sort((x, y) =>
-          nombreFaltante(x).localeCompare(nombreFaltante(y), 'es', { sensitivity: 'base' })
-        )
-      }))
-  }, [lista])
+  const listaManual = useMemo(
+    () =>
+      [...lista].sort((a, b) =>
+        nombreFaltante(a).localeCompare(nombreFaltante(b), 'es', { sensitivity: 'base' })
+      ),
+    [lista]
+  )
 
   const loadConfigReporte = useCallback(async () => {
     if (!isAdmin) return
@@ -347,9 +261,9 @@ const Faltantes = () => {
 
   const registrar = async (e) => {
     e.preventDefault()
-    const texto = (productoSel?.nombre || productoTexto).trim()
+    const texto = productoTexto.trim()
     if (!texto) {
-      setMensaje({ tipo: 'aviso', texto: 'Elegí un producto o escribí una descripción.' })
+      setMensaje({ tipo: 'aviso', texto: 'Escribí qué producto falta.' })
       return
     }
     setGuardando(true)
@@ -358,11 +272,10 @@ const Faltantes = () => {
       await faltantesAPI.registrar({
         tipo: 'faltante',
         producto_texto: texto,
-        producto_id: productoSel?.id ?? null
+        producto_id: null
       })
       setMensaje({ tipo: 'ok', texto: 'Registro guardado.' })
-      limpiarProductoSel()
-      setBusquedaProd('')
+      setProductoTexto('')
       await loadLista()
     } catch (err) {
       setMensaje({
@@ -571,98 +484,19 @@ const Faltantes = () => {
             <h3 className="text-sm font-semibold text-gray-800 uppercase tracking-wide dark:text-slate-100">
               Nuevo registro
             </h3>
-
-            {productoSel ? (
-              <div className="rounded-xl border border-rose-200 bg-rose-50/60 px-4 py-3 dark:border-rose-500/40 dark:bg-rose-950/30">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-semibold text-gray-900 dark:text-slate-50 truncate">
-                      {productoSel.nombre}
-                    </p>
-                    <p className="text-xs font-mono text-gray-500 dark:text-slate-400">
-                      {productoSel.codigo || 'Sin código'}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1 dark:text-slate-400">
-                      Stock: {fmtCantidadStock(productoSel.stock_actual, productoSel.unidad_medida)}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={limpiarProductoSel}
-                    className="text-sm font-medium text-rose-700 hover:underline dark:text-rose-300"
-                  >
-                    Cambiar
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="relative">
-                  <Search
-                    size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
-                  <input
-                    type="search"
-                    value={busquedaProd}
-                    onChange={(e) => setBusquedaProd(e.target.value)}
-                    onKeyDown={onBusquedaProdKeyDown}
-                    placeholder="Buscar producto por nombre o código…"
-                    className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm dark:bg-slate-950 dark:border-slate-600 dark:text-slate-100"
-                    autoFocus
-                  />
-                </div>
-                <ul
-                  ref={listaProdRef}
-                  className="divide-y divide-gray-100 border border-gray-200 rounded-xl max-h-52 overflow-y-auto dark:divide-slate-700 dark:border-slate-700"
-                >
-                  {productosFiltrados.length === 0 ? (
-                    <li className="px-4 py-6 text-center text-sm text-gray-500 dark:text-slate-400">
-                      No hay productos que coincidan.
-                    </li>
-                  ) : (
-                    productosFiltrados.map((p, idx) => (
-                      <li key={p.id} data-prod-idx={idx}>
-                        <button
-                          type="button"
-                          onClick={() => elegirProducto(p)}
-                          onMouseEnter={() => setProdHighlightIdx(idx)}
-                          className={`w-full text-left px-4 py-2.5 flex justify-between gap-3 dark:hover:bg-rose-950/40 ${
-                            idx === prodHighlightIdx
-                              ? 'bg-rose-50 dark:bg-rose-950/50'
-                              : 'hover:bg-rose-50/80'
-                          }`}
-                        >
-                          <div className="min-w-0">
-                            <p className="font-medium text-gray-900 truncate dark:text-slate-100">
-                              {p.nombre}
-                            </p>
-                            <p className="text-xs font-mono text-gray-500 dark:text-slate-400">
-                              {p.codigo || 'Sin código'}
-                            </p>
-                          </div>
-                          <p className="text-sm tabular-nums text-gray-700 shrink-0 dark:text-slate-300">
-                            {fmtCantidadStock(p.stock_actual, p.unidad_medida)}
-                          </p>
-                        </button>
-                      </li>
-                    ))
-                  )}
-                </ul>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">
-                    O descripción libre (si no está en el catálogo)
-                  </label>
-                  <input
-                    type="text"
-                    value={productoTexto}
-                    onChange={(e) => setProductoTexto(e.target.value)}
-                    placeholder="Nombre del producto o descripción…"
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm dark:bg-slate-950 dark:border-slate-600 dark:text-slate-100"
-                  />
-                </div>
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-200">
+                Qué falta
+              </label>
+              <input
+                type="text"
+                value={productoTexto}
+                onChange={(e) => setProductoTexto(e.target.value)}
+                placeholder="Nombre del producto o descripción…"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm dark:bg-slate-950 dark:border-slate-600 dark:text-slate-100"
+                autoFocus
+              />
+            </div>
 
             <button
               type="submit"
@@ -733,35 +567,18 @@ const Faltantes = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {listaPorCategoria.map(({ categoria, items }) => (
-                      <Fragment key={categoria}>
-                        <tr className="bg-gray-100 dark:bg-slate-800">
-                          <td
-                            colSpan={2}
-                            className="px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-gray-800 dark:text-slate-100"
-                          >
-                            <span className="flex items-center justify-between gap-2">
-                              <span>{categoria}</span>
-                              <span className="font-medium normal-case tracking-normal text-gray-500 dark:text-slate-400">
-                                {items.length} prod.
-                              </span>
-                            </span>
-                          </td>
-                        </tr>
-                        {items.map((row) => (
-                          <tr
-                            key={row.id}
-                            className="border-b border-gray-100 hover:bg-gray-50 dark:border-slate-700 dark:hover:bg-slate-800/60"
-                          >
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-slate-50">
-                              {nombreFaltante(row)}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold tabular-nums text-gray-900 dark:text-slate-100">
-                              {cantidadFaltanteLabel(row)}
-                            </td>
-                          </tr>
-                        ))}
-                      </Fragment>
+                    {listaManual.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="border-b border-gray-100 hover:bg-gray-50 dark:border-slate-700 dark:hover:bg-slate-800/60"
+                      >
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-slate-50">
+                          {nombreFaltante(row)}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold tabular-nums text-gray-900 dark:text-slate-100">
+                          {cantidadFaltanteLabel(row)}
+                        </td>
+                      </tr>
                     ))}
                   </tbody>
                 </table>

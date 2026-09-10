@@ -14,8 +14,13 @@ router.get('/', async (req, res) => {
       .trim()
       .toLowerCase();
     const tipo = Faltante.tiposValidos().includes(tipoRaw) ? tipoRaw : null;
+    const soloManual =
+      req.query.solo_manual === '1' ||
+      req.query.solo_manual === 'true' ||
+      req.query.manual === '1';
     const rows = await Faltante.listar({
       tipo,
+      soloManual,
       limit: req.query.limit,
       offset: req.query.offset,
       desde: normalizarFecha(req.query.desde),

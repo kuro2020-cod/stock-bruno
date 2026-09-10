@@ -61,7 +61,7 @@ export async function enviarReporteFaltantes({ forzar = false } = {}) {
   const label = fechaLabelEs(fecha);
 
   const [faltantes, stockBajo] = await Promise.all([
-    Faltante.listar({ desde: fecha, hasta: fecha, limit: 2000 }),
+    Faltante.listar({ desde: fecha, hasta: fecha, soloManual: true, limit: 2000 }),
     Producto.getLowStock()
   ]);
 

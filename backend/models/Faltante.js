@@ -29,7 +29,14 @@ export class Faltante {
     );
   }
 
-  static async listar({ desde = null, hasta = null, tipo = null, limit = 500, offset = 0 } = {}) {
+  static async listar({
+    desde = null,
+    hasta = null,
+    tipo = null,
+    soloManual = false,
+    limit = 500,
+    offset = 0
+  } = {}) {
     const lim = Math.min(2000, Math.max(1, Number(limit) || 500));
     const off = Math.max(0, Number(offset) || 0);
     const params = [];
@@ -46,6 +53,9 @@ export class Faltante {
     if (tipo && TIPOS.includes(tipo)) {
       conds.push(`f.tipo = ?`);
       params.push(tipo);
+    }
+    if (soloManual) {
+      conds.push(`f.producto_id IS NULL`);
     }
 
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
