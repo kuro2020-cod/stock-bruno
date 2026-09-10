@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { productosAPI } from '../services/api'
 import { fmtFechaCorta } from '../utils/fechas'
 import { fmtCantidadStock } from '../utils/unidades'
+import ProductoModal from './ProductoModal'
 
 function textoDias(p) {
   if (p.vencido) return 'VENCIDO'
@@ -26,6 +27,19 @@ const AlertaVencimientos = () => {
   const location = useLocation()
   const [items, setItems] = useState([])
   const [abierto, setAbierto] = useState(false)
+  const [productoEditar, setProductoEditar] = useState(null)
+
+  const cargar = async () => {
+    try {
+      const { data } = await productosAPI.getVencimientosAlerta()
+      const next = Array.isArray(data) ? data : []
+      setItems(next)
+      if (next.length === 0) setAbierto(false)
+    } catch {
+      setItems([])
+      setAbierto(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -42,7 +56,7 @@ const AlertaVencimientos = () => {
     }
   }, [location.pathname])
 
-  if (items.length === 0) return null
+  if (items.length === 0 && !productoEditar) return null
 
   const vencidos = items.filter((p) => p.vencido)
   const porVencer = items.filter((p) => !p.vencido)
@@ -50,6 +64,7 @@ const AlertaVencimientos = () => {
 
   return (
     <>
+      {items.length > 0 && (
       <button
         type="button"
         onClick={() => setAbierto(true)}
@@ -66,6 +81,7 @@ const AlertaVencimientos = () => {
           {items.length}
         </span>
       </button>
+      )}
 
       {abierto && (
         <div
@@ -91,7 +107,7 @@ const AlertaVencimientos = () => {
                     {tituloAlerta(vencidos, porVencer)}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-slate-400 mt-0.5">
-                    Revisá el stock con vencimiento. El aviso aparece una semana antes de la fecha.
+                    Tocá un producto para editarlo y cambiar el vencimiento.
                   </p>
                 </div>
               </div>
@@ -107,26 +123,32 @@ const AlertaVencimientos = () => {
 
             <ul className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-slate-800">
               {items.map((p) => (
-                <li key={p.id} className="px-5 py-3 flex flex-wrap items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-medium text-sm text-gray-900 dark:text-slate-50 truncate">{p.nombre}</p>
-                    <p className="text-xs text-gray-600 dark:text-slate-400">
-                      {p.codigo || 'Sin código'} · Stock {fmtCantidadStock(p.stock_actual, p.unidad_medida)}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p
-                      className={`text-xs font-bold uppercase tracking-wide ${
-                        p.vencido ? 'text-red-700 dark:text-red-300' : 'text-amber-800 dark:text-amber-200'
-                      }`}
-                    >
-                      {textoDias(p)}
-                    </p>
-                    <p className="text-xs tabular-nums text-gray-700 dark:text-slate-300 flex items-center justify-end gap-1">
-                      <CalendarClock size={12} />
-                      {fmtFechaCorta(p.fecha_vencimiento)}
-                    </p>
-                  </div>
+                <li key={p.id}>
+                  <button
+                    type="button"
+                    onClick={() => setProductoEditar(p)}
+                    className="w-full text-left px-5 py-3 flex flex-wrap items-center justify-between gap-2 hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm text-gray-900 dark:text-slate-50 break-words">{p.nombre}</p>
+                      <p className="text-xs text-gray-600 dark:text-slate-400">
+                        {p.codigo || 'Sin código'} · Stock {fmtCantidadStock(p.stock_actual, p.unidad_medida)}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p
+                        className={`text-xs font-bold uppercase tracking-wide ${
+                          p.vencido ? 'text-red-700 dark:text-red-300' : 'text-amber-800 dark:text-amber-200'
+                        }`}
+                      >
+                        {textoDias(p)}
+                      </p>
+                      <p className="text-xs tabular-nums text-gray-700 dark:text-slate-300 flex items-center justify-end gap-1">
+                        <CalendarClock size={12} />
+                        {fmtFechaCorta(p.fecha_vencimiento)}
+                      </p>
+                    </div>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -142,6 +164,16 @@ const AlertaVencimientos = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {productoEditar && (
+        <ProductoModal
+          producto={productoEditar}
+          onClose={() => {
+            setProductoEditar(null)
+            cargar()
+          }}
+        />
       )}
     </>
   )

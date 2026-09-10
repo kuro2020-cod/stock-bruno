@@ -3,6 +3,7 @@ import { AlertTriangle, CalendarClock, Package } from 'lucide-react'
 import { productosAPI } from '../services/api'
 import { fmtFechaCorta } from '../utils/fechas'
 import { fmtCantidadStock } from '../utils/unidades'
+import ProductoModal from '../components/ProductoModal'
 
 function textoDias(p) {
   if (p.vencido) return 'VENCIDO'
@@ -27,6 +28,16 @@ function tituloAlerta(vencidos, porVencer) {
 const Vencimientos = () => {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [productoEditar, setProductoEditar] = useState(null)
+
+  const cargar = async () => {
+    try {
+      const { data } = await productosAPI.getVencimientosAlerta()
+      setItems(Array.isArray(data) ? data : [])
+    } catch {
+      setItems([])
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -61,7 +72,8 @@ const Vencimientos = () => {
           Vencimientos
         </h2>
         <p className="page-subtitle">
-          {tituloAlerta(vencidos, porVencer)}. El aviso aparece una semana antes de la fecha.
+          {tituloAlerta(vencidos, porVencer)}. Tocá un producto para editar el vencimiento. El aviso aparece una semana
+          antes de la fecha.
         </p>
       </div>
 
@@ -95,31 +107,49 @@ const Vencimientos = () => {
           </div>
           <ul className="divide-y divide-gray-100 dark:divide-slate-800">
             {items.map((p) => (
-              <li key={p.id} className="px-5 py-3 flex flex-wrap items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="font-medium text-sm text-gray-900 dark:text-slate-50 truncate">{p.nombre}</p>
-                  <p className="text-xs text-gray-600 dark:text-slate-400">
-                    {p.codigo || 'Sin código'} · Stock {fmtCantidadStock(p.stock_actual, p.unidad_medida)}
-                    {p.categoria_nombre ? ` · ${p.categoria_nombre}` : ''}
-                  </p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p
-                    className={`text-xs font-bold uppercase tracking-wide ${
-                      p.vencido ? 'text-red-700 dark:text-red-300' : 'text-amber-800 dark:text-amber-200'
-                    }`}
-                  >
-                    {textoDias(p)}
-                  </p>
-                  <p className="text-xs tabular-nums text-gray-700 dark:text-slate-300 flex items-center justify-end gap-1">
-                    <CalendarClock size={12} />
-                    {fmtFechaCorta(p.fecha_vencimiento)}
-                  </p>
-                </div>
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => setProductoEditar(p)}
+                  className="w-full text-left px-5 py-3 flex flex-wrap items-center justify-between gap-2 hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-gray-900 dark:text-slate-50 break-words">
+                      {p.nombre}
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-slate-400">
+                      {p.codigo || 'Sin código'} · Stock {fmtCantidadStock(p.stock_actual, p.unidad_medida)}
+                      {p.categoria_nombre ? ` · ${p.categoria_nombre}` : ''}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p
+                      className={`text-xs font-bold uppercase tracking-wide ${
+                        p.vencido ? 'text-red-700 dark:text-red-300' : 'text-amber-800 dark:text-amber-200'
+                      }`}
+                    >
+                      {textoDias(p)}
+                    </p>
+                    <p className="text-xs tabular-nums text-gray-700 dark:text-slate-300 flex items-center justify-end gap-1">
+                      <CalendarClock size={12} />
+                      {fmtFechaCorta(p.fecha_vencimiento)}
+                    </p>
+                  </div>
+                </button>
               </li>
             ))}
           </ul>
         </div>
+      )}
+
+      {productoEditar && (
+        <ProductoModal
+          producto={productoEditar}
+          onClose={() => {
+            setProductoEditar(null)
+            cargar()
+          }}
+        />
       )}
     </div>
   )

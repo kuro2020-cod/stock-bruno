@@ -429,15 +429,15 @@ const Pedidos = () => {
         </div>
       ) : (
         <div className="card min-w-0 max-w-full overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
+          <table className="w-full table-fixed">
               <thead className="bg-gray-50 dark:bg-slate-800">
                 <tr>
                   {encabezadoOrden('nombre', 'Producto')}
-                  {encabezadoOrden('categoria', 'Categorías', 'left', 'hidden md:table-cell')}
-                  {encabezadoOrden('stock', 'Stock', 'right')}
-                  <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-slate-400">
-                    Cantidad a pedir
+                  {encabezadoOrden('categoria', 'Categorías', 'left', 'hidden md:table-cell w-44')}
+                  {encabezadoOrden('stock', 'Stock', 'right', 'hidden sm:table-cell w-24')}
+                  <th className="w-[7.25rem] sm:w-48 !px-1 sm:!px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-slate-400">
+                    <span className="sm:hidden">Pedir</span>
+                    <span className="hidden sm:inline">Cantidad a pedir</span>
                   </th>
                 </tr>
               </thead>
@@ -445,19 +445,25 @@ const Pedidos = () => {
                 {filtrados.map((p) => {
                   const decimal = esVentaPorMedidaDecimal(p.unidad_medida)
                   const qty = cantidadDe(p)
+                  const stockTxt = productoNoControlaStock(p)
+                    ? 'Sin stock'
+                    : fmtCantidadStock(p.stock_actual, p.unidad_medida)
                   return (
                     <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/70">
-                      <td className="px-3 sm:px-6 py-3">
-                        <div className="text-sm font-medium text-gray-900 dark:text-slate-100">
+                      <td className="px-2.5 sm:px-6 py-2.5 sm:py-3 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 dark:text-slate-100 break-words leading-snug">
                           {p.nombre}
                         </div>
                         {p.codigo && (
-                          <div className="text-xs font-mono text-gray-500 dark:text-slate-400">
+                          <div className="text-[11px] font-mono text-gray-500 dark:text-slate-400 truncate">
                             {p.codigo}
                           </div>
                         )}
+                        <div className="sm:hidden text-[11px] text-gray-500 dark:text-slate-400 mt-0.5 tabular-nums">
+                          Stock: {stockTxt}
+                        </div>
                       </td>
-                      <td className="px-3 sm:px-6 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-slate-300 hidden md:table-cell">
+                      <td className="px-3 sm:px-6 py-3 text-sm text-gray-600 dark:text-slate-300 hidden md:table-cell">
                         <CategoriaProductoSelect
                           productoId={p.id}
                           categoriaId={p.categoria_id}
@@ -469,27 +475,28 @@ const Pedidos = () => {
                               )
                             )
                           }
+                          className="max-w-full w-full"
                         />
                       </td>
-                      <td className="px-3 sm:px-6 py-3 whitespace-nowrap text-right text-sm tabular-nums">
+                      <td className="px-2 sm:px-6 py-3 whitespace-nowrap text-right text-sm tabular-nums hidden sm:table-cell">
                         {productoNoControlaStock(p) ? (
                           <span className="text-violet-700 dark:text-violet-300">Sin stock</span>
                         ) : (
                           <span className="text-gray-900 dark:text-slate-100">
-                            {fmtCantidadStock(p.stock_actual, p.unidad_medida)}
+                            {stockTxt}
                           </span>
                         )}
                       </td>
-                      <td className="px-3 sm:px-6 py-3">
-                        <div className="flex items-center justify-center gap-2">
+                      <td className="!px-1 sm:!px-6 py-2 sm:py-3">
+                        <div className="flex items-center justify-center gap-0.5 sm:gap-2">
                           <button
                             type="button"
                             onClick={() => cambiar(p, -1)}
                             disabled={qty <= 0}
-                            className="p-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed dark:border-slate-600 dark:hover:bg-slate-800"
+                            className="p-1 sm:p-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed dark:border-slate-600 dark:hover:bg-slate-800"
                             aria-label={`Restar ${p.nombre}`}
                           >
-                            <Minus size={16} />
+                            <Minus size={14} />
                           </button>
                           <input
                             type="number"
@@ -509,15 +516,15 @@ const Pedidos = () => {
                                 setCantidad(p, 0)
                               }
                             }}
-                            className="w-20 text-center py-1.5 border border-gray-300 rounded-lg text-sm tabular-nums dark:bg-slate-800 dark:border-slate-600"
+                            className="w-11 sm:w-20 min-w-0 text-center py-1 sm:py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm tabular-nums dark:bg-slate-800 dark:border-slate-600"
                           />
                           <button
                             type="button"
                             onClick={() => cambiar(p, 1)}
-                            className="p-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 dark:border-slate-600 dark:hover:bg-slate-800"
+                            className="p-1 sm:p-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 dark:border-slate-600 dark:hover:bg-slate-800"
                             aria-label={`Sumar ${p.nombre}`}
                           >
-                            <Plus size={16} />
+                            <Plus size={14} />
                           </button>
                         </div>
                       </td>
@@ -526,7 +533,6 @@ const Pedidos = () => {
                 })}
               </tbody>
             </table>
-          </div>
         </div>
       )}
 
