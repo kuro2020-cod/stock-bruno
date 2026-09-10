@@ -1,0 +1,13 @@
+cierre de caja
+al momento de realizar la venta, detallar el metodo de pago
+en las categorias, al seleccionar una que se muestren los productos que tienen, algun tipo de estadisticas para verificar los mas vendidos
+en MOVIMIENTOS colocar un filtro de fecha para que no aparezcan todos juntos
+---------------------------------------------------------------------------------------------------------------------
+
+
+AGREGAR MOVIMIENTOS EN EL USUARIO USER DE SOLO SUS VENTAS
+PERMITIR MULTIPLES CIERRES DE CAJA, UNO PARA CADA USUARIO
+AGREGAR APERTURA DE CAJA CON EL INICIO DE SESION, QUE QUEDE GUARDADO EN LOS MOVIMIENTOS TAMBIEN A LA MISMA ALTURA DEL CIERRE DE CAJA
+
+
+REALIZAR PAGOS O SALIDAS DE DINERO

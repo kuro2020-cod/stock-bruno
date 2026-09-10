@@ -1,0 +1,540 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+body {
+    @apply bg-slate-50 text-slate-800 antialiased;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  html.dark body {
+    @apply bg-slate-950 text-slate-200;
+  }
+
+  ::selection {
+    @apply bg-brand-200 text-brand-900;
+  }
+
+  html.dark ::selection {
+    @apply bg-brand-700 text-brand-50;
+  }
+}
+
+@layer components {
+  .page-title {
+    @apply text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3 dark:text-slate-50;
+  }
+
+  .page-subtitle {
+    @apply text-slate-500 mt-1.5 text-sm sm:text-base leading-relaxed max-w-3xl dark:text-slate-400;
+  }
+
+  .page-header {
+    @apply mb-8 animate-slide-up;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl border border-slate-200/80 shadow-soft dark:bg-slate-900 dark:border-slate-700/70 dark:shadow-none;
+  }
+
+  .card-header {
+    @apply px-5 py-4 border-b border-slate-100 bg-slate-50/80 rounded-t-2xl font-semibold text-slate-700 text-sm dark:border-slate-700/70 dark:bg-slate-800/80 dark:text-slate-200;
+  }
+
+  .card-body {
+    @apply p-5;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200
+      focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed
+      dark:focus:ring-offset-slate-900;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .btn-md {
+    @apply px-4 py-2.5 text-sm;
+  }
+
+  .btn-primary {
+    @apply btn btn-md bg-brand-600 text-white hover:bg-brand-700 focus:ring-brand-500 shadow-sm hover:shadow-md;
+  }
+
+  .btn-secondary {
+    @apply btn btn-md bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 focus:ring-slate-300
+      dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700 dark:focus:ring-slate-500;
+  }
+
+  .btn-success {
+    @apply btn btn-md bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500;
+  }
+
+  .btn-danger {
+    @apply btn btn-md bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-500;
+  }
+
+  .input-field {
+    @apply w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800
+      placeholder:text-slate-400 transition-shadow
+      focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400
+      dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500
+      dark:focus:ring-brand-400/30 dark:focus:border-brand-400;
+  }
+
+  .select-field {
+    @apply input-field pr-9 cursor-pointer;
+  }
+
+  .label-field {
+    @apply block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5 dark:text-slate-400;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  .badge-brand {
+    @apply badge bg-brand-100 text-brand-800 dark:bg-brand-900/60 dark:text-brand-200;
+  }
+
+  .badge-admin {
+    @apply badge bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200;
+  }
+
+  .badge-user {
+    @apply badge bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200;
+  }
+
+  .badge-externo {
+    @apply badge bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200;
+  }
+
+  .stat-card {
+    @apply card p-5 hover:shadow-card transition-shadow duration-300 dark:hover:shadow-none dark:hover:border-slate-600;
+  }
+
+  .table-shell {
+    @apply card overflow-hidden;
+  }
+
+  .data-table {
+    @apply w-full text-sm text-left;
+  }
+
+  .data-table thead {
+    @apply bg-slate-50/90 text-slate-500 uppercase text-xs tracking-wider dark:bg-slate-800/90 dark:text-slate-400;
+  }
+
+  .data-table th {
+    @apply px-4 py-3 font-semibold;
+  }
+
+  .data-table td {
+    @apply px-4 py-3 border-t border-slate-100 text-slate-700 dark:border-slate-700/70 dark:text-slate-300;
+  }
+
+  .data-table tbody tr {
+    @apply hover:bg-brand-50/40 transition-colors dark:hover:bg-brand-950/40;
+  }
+
+  .modal-panel {
+    @apply bg-white rounded-2xl shadow-card border border-slate-200/80 w-full max-h-[90vh] overflow-y-auto animate-slide-up
+      dark:bg-slate-900 dark:border-slate-700/80 dark:shadow-none;
+  }
+
+  .loading-screen {
+    @apply min-h-screen flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-slate-50 via-brand-50/30 to-indigo-50/40
+      dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950;
+  }
+
+  .loading-spinner {
+    @apply w-10 h-10 rounded-full border-[3px] border-brand-200 border-t-brand-600 animate-spin
+      dark:border-brand-800 dark:border-t-brand-400;
+  }
+}
+
+/* Mejora automática de tarjetas y tablas en el contenido principal */
+@layer utilities {
+  main .bg-white.rounded-lg.shadow,
+  main .bg-white.rounded-xl.shadow,
+  main .bg-white.rounded-xl.shadow.border,
+  main .bg-white.rounded-lg.shadow.border {
+    @apply rounded-2xl border-slate-200/80 shadow-soft;
+  }
+
+  main table {
+    @apply text-sm;
+  }
+
+  main table thead {
+    @apply bg-slate-50/90;
+  }
+
+  main table th {
+    @apply text-slate-500 font-semibold;
+  }
+
+  main table tbody tr:hover {
+    @apply bg-brand-50/30 transition-colors;
+  }
+}
+
+/* ==========================================================================
+   Puente de modo oscuro
+   Las pantallas usan utilidades claras fijas (bg-white, text-gray-900, etc.).
+   Acá se remapean dentro del contenido y los modales.
+   Se usan selectores de atributo para que Tailwind no los confunda con
+   utilidades redefinidas al resolver @apply.
+   ========================================================================== */
+
+/* --- Superficies base --- */
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='bg-white'],
+    [class~='bg-white/95'],
+    [class~='bg-white/90'],
+    [class~='bg-white/80'],
+    [class~='bg-white/70']
+  ) {
+  background-color: rgb(15 23 42) !important; /* slate-900 */
+}
+
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='bg-gray-50'],
+    [class~='bg-gray-50/50'],
+    [class~='bg-gray-50/80'],
+    [class~='bg-gray-100'],
+    [class~='bg-gray-200'],
+    [class~='bg-slate-50'],
+    [class~='bg-slate-50/80'],
+    [class~='bg-slate-50/90'],
+    [class~='bg-slate-100']
+  ) {
+  background-color: rgb(30 41 59) !important; /* slate-800 */
+}
+
+/* --- Hover de filas / items de lista --- */
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='hover:bg-white'],
+    [class~='hover:bg-white/50'],
+    [class~='hover:bg-gray-50'],
+    [class~='hover:bg-gray-100'],
+    [class~='hover:bg-slate-50'],
+    [class~='hover:bg-slate-100'],
+    [class~='hover:bg-brand-50'],
+    [class~='hover:bg-emerald-50'],
+    [class~='hover:bg-amber-50'],
+    [class~='hover:bg-rose-50'],
+    [class~='hover:bg-red-50'],
+    [class~='hover:bg-sky-50'],
+    [class~='hover:bg-indigo-50'],
+    [class~='hover:bg-violet-50']
+  ):hover {
+  background-color: rgb(51 65 85) !important; /* slate-700 */
+}
+
+/* --- Bordes neutros --- */
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='border-gray-100'],
+    [class~='border-gray-200'],
+    [class~='border-gray-300'],
+    [class~='border-slate-100'],
+    [class~='border-slate-200'],
+    [class~='border-slate-200/80'],
+    [class~='border-slate-300']
+  ) {
+  border-color: rgb(51 65 85) !important; /* slate-700 */
+}
+
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='divide-gray-100'],
+    [class~='divide-gray-200'],
+    [class~='divide-slate-100'],
+    [class~='divide-slate-200']
+  ) > * + * {
+  border-color: rgb(51 65 85) !important;
+}
+
+/* --- Texto neutro --- */
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='text-gray-900'],
+    [class~='text-gray-800'],
+    [class~='text-slate-900'],
+    [class~='text-slate-800']
+  ) {
+  color: rgb(241 245 249) !important; /* slate-100 */
+}
+
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='text-gray-700'],
+    [class~='text-slate-700']
+  ) {
+  color: rgb(203 213 225) !important; /* slate-300 */
+}
+
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='text-gray-600'],
+    [class~='text-gray-500'],
+    [class~='text-gray-400'],
+    [class~='text-gray-300'],
+    [class~='text-slate-600'],
+    [class~='text-slate-500'],
+    [class~='text-slate-400']
+  ) {
+  color: rgb(148 163 184) !important; /* slate-400 */
+}
+
+/* --- Fondos tintados suaves --- */
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='bg-emerald-50'],
+    [class~='bg-emerald-50/50'],
+    [class~='bg-emerald-50/80'],
+    [class~='bg-emerald-50/90'],
+    [class~='bg-emerald-100'],
+    [class~='bg-green-50'],
+    [class~='bg-green-100'],
+    [class~='bg-teal-50']
+  ) {
+  background-color: rgb(6 78 59 / 0.45) !important;
+}
+
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='bg-amber-50'],
+    [class~='bg-amber-50/50'],
+    [class~='bg-amber-50/80'],
+    [class~='bg-amber-100'],
+    [class~='bg-yellow-50'],
+    [class~='bg-yellow-100'],
+    [class~='bg-orange-50'],
+    [class~='bg-orange-100']
+  ) {
+  background-color: rgb(120 53 15 / 0.5) !important;
+}
+
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='bg-red-50'],
+    [class~='bg-red-100'],
+    [class~='bg-rose-50'],
+    [class~='bg-rose-50/80'],
+    [class~='bg-rose-100']
+  ) {
+  background-color: rgb(127 29 29 / 0.45) !important;
+}
+
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='bg-sky-50'],
+    [class~='bg-sky-100'],
+    [class~='bg-blue-50'],
+    [class~='bg-blue-50/50'],
+    [class~='bg-blue-100'],
+    [class~='bg-cyan-50']
+  ) {
+  background-color: rgb(12 74 110 / 0.45) !important;
+}
+
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='bg-violet-50'],
+    [class~='bg-violet-100'],
+    [class~='bg-purple-50'],
+    [class~='bg-purple-100'],
+    [class~='bg-indigo-50'],
+    [class~='bg-indigo-100'],
+    [class~='bg-brand-50'],
+    [class~='bg-brand-50/40'],
+    [class~='bg-brand-100']
+  ) {
+  background-color: rgb(49 46 129 / 0.45) !important;
+}
+
+/* --- Texto tintado oscuro → tono claro legible --- */
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='text-emerald-700'],
+    [class~='text-emerald-700/80'],
+    [class~='text-emerald-800'],
+    [class~='text-emerald-800/80'],
+    [class~='text-emerald-900'],
+    [class~='text-emerald-950'],
+    [class~='text-green-700'],
+    [class~='text-green-800'],
+    [class~='text-green-900'],
+    [class~='text-teal-800']
+  ) {
+  color: rgb(110 231 183) !important; /* emerald-300 */
+}
+
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='text-amber-700'],
+    [class~='text-amber-800'],
+    [class~='text-amber-900'],
+    [class~='text-amber-900/80'],
+    [class~='text-amber-950'],
+    [class~='text-yellow-800'],
+    [class~='text-yellow-900'],
+    [class~='text-orange-800'],
+    [class~='text-orange-900']
+  ) {
+  color: rgb(252 211 77) !important; /* amber-300 */
+}
+
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='text-red-700'],
+    [class~='text-red-800'],
+    [class~='text-red-900'],
+    [class~='text-rose-700'],
+    [class~='text-rose-800'],
+    [class~='text-rose-900']
+  ) {
+  color: rgb(252 165 165) !important; /* red-300 */
+}
+
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='text-sky-700'],
+    [class~='text-sky-800'],
+    [class~='text-sky-800/90'],
+    [class~='text-sky-900'],
+    [class~='text-sky-950'],
+    [class~='text-blue-700'],
+    [class~='text-blue-800'],
+    [class~='text-blue-900'],
+    [class~='text-cyan-800']
+  ) {
+  color: rgb(125 211 252) !important; /* sky-300 */
+}
+
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='text-violet-700'],
+    [class~='text-violet-800'],
+    [class~='text-violet-900'],
+    [class~='text-purple-800'],
+    [class~='text-purple-900'],
+    [class~='text-indigo-700'],
+    [class~='text-indigo-800'],
+    [class~='text-indigo-900'],
+    [class~='text-brand-700'],
+    [class~='text-brand-800'],
+    [class~='text-brand-900']
+  ) {
+  color: rgb(196 181 253) !important; /* violet-300 */
+}
+
+/* --- Bordes tintados muy claros --- */
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) :is(
+    [class~='border-emerald-100'],
+    [class~='border-amber-100'],
+    [class~='border-red-100'],
+    [class~='border-rose-100'],
+    [class~='border-sky-100'],
+    [class~='border-blue-100'],
+    [class~='border-violet-100'],
+    [class~='border-indigo-100']
+  ) {
+  border-color: rgb(71 85 105 / 0.8) !important;
+}
+
+/* --- Campos de formulario --- */
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation'])
+  :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+  background-color: rgb(30 41 59) !important; /* slate-800 */
+  border-color: rgb(71 85 105) !important; /* slate-600 */
+  color: rgb(241 245 249) !important; /* slate-100 */
+}
+
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation'])
+  :is(input, textarea)::placeholder {
+  color: rgb(100 116 139) !important; /* slate-500 */
+}
+
+html.dark :is(main, .modal-panel, [role='dialog'], [role='presentation']) option {
+  background-color: rgb(30 41 59);
+  color: rgb(241 245 249);
+}
+
+/* --- Tablas --- */
+html.dark :is(main, .modal-panel, [role='dialog']) table thead {
+  background-color: rgb(30 41 59 / 0.9) !important;
+}
+
+html.dark :is(main, .modal-panel, [role='dialog']) table th {
+  color: rgb(148 163 184) !important;
+}
+
+html.dark :is(main, .modal-panel, [role='dialog']) table td {
+  border-color: rgb(51 65 85 / 0.7) !important;
+  color: rgb(203 213 225) !important;
+}
+
+html.dark :is(main, .modal-panel, [role='dialog']) table tbody tr:hover {
+  background-color: rgb(51 65 85 / 0.6) !important;
+}
+
+/* El modo claro debe prevalecer aunque el navegador prefiera tema oscuro. */
+html:not(.dark) body {
+  background-color: white !important;
+  color: rgb(30 41 59) !important;
+}
+
+html:not(.dark) .page-title {
+  color: rgb(15 23 42) !important;
+}
+
+html:not(.dark) .page-subtitle {
+  color: rgb(100 116 139) !important;
+}
+
+html:not(.dark) .input-field,
+html:not(.dark) .select-field {
+  background-color: white !important;
+  border-color: rgb(226 232 240) !important;
+  color: rgb(30 41 59) !important;
+}
+
+html:not(.dark) .input-field::placeholder {
+  color: rgb(148 163 184) !important;
+}
+
+html:not(.dark) .label-field {
+  color: rgb(100 116 139) !important;
+}
+
+html:not(.dark) :is(main, .modal-panel) .card,
+html:not(.dark) main [class~='bg-white'] {
+  background-color: white !important;
+  border-color: rgb(226 232 240 / 0.8) !important;
+}
+
+html:not(.dark) :is(main, .modal-panel)
+  :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+  background-color: white !important;
+  color: rgb(30 41 59) !important;
+}
+
+/* Mantener legible el autocompletado del navegador en el acceso. */
+#login-usuario:-webkit-autofill,
+#login-usuario:-webkit-autofill:hover,
+#login-usuario:-webkit-autofill:focus,
+#login-clave:-webkit-autofill,
+#login-clave:-webkit-autofill:hover,
+#login-clave:-webkit-autofill:focus {
+  -webkit-text-fill-color: rgb(30 41 59) !important;
+  caret-color: rgb(30 41 59);
+  box-shadow: 0 0 0 1000px white inset !important;
+  -webkit-box-shadow: 0 0 0 1000px white inset !important;
+  transition: background-color 9999s ease-out 0s;
+}
+
+@media print {
+  .print\:hidden {
+    display: none !important;
+  }
+}

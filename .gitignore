@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+*.db
+*.sqlite
+*.sqlite3
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Túnel y logs locales
+scripts/bin/
+scripts/tunel-config.txt
+scripts/tunel-url.txt
+scripts/tunel.log
+scripts/servidor.log
