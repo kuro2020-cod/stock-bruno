@@ -640,7 +640,7 @@ const HistorialCierresCaja = () => {
                             <p className="text-xs font-bold text-red-800 uppercase tracking-wide mb-2">
                               Pagos proveedores
                             </p>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               {['efectivo', 'transferencia'].map((key) => (
                                 <div
                                   key={key}
@@ -661,7 +661,7 @@ const HistorialCierresCaja = () => {
                               <p className="text-xs font-bold text-violet-800 uppercase tracking-wide mb-2">
                                 Discriminación de rubros
                               </p>
-                              <div className="grid grid-cols-2 gap-2">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {rubros.map((r) => (
                                   <div
                                     key={r.key}

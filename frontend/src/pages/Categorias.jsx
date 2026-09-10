@@ -80,7 +80,7 @@ const Categorias = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="page-toolbar">
         <h2 className="page-title">Categorías</h2>
         <button
           onClick={handleNew}

@@ -76,7 +76,7 @@ const UsuarioModal = ({ usuario, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="modal-panel max-w-lg">
-        <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b sticky top-0 bg-white">
           <h3 className="text-xl font-semibold text-gray-800">
             {usuario ? 'Editar usuario' : 'Nuevo usuario'}
           </h3>
@@ -85,7 +85,7 @@ const UsuarioModal = ({ usuario, onClose }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
@@ -190,7 +190,7 @@ const UsuarioModal = ({ usuario, onClose }) => {
             </span>
           </label>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          <div className="flex flex-wrap justify-end gap-3 pt-4 border-t">
             <button
               type="button"
               onClick={onClose}

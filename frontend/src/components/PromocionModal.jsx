@@ -256,7 +256,7 @@ const PromocionModal = ({ promocion, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="modal-panel max-w-2xl">
-        <div className="flex justify-between items-center p-6 border-b">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b">
           <h3 className="text-xl font-semibold text-gray-800">
             {promocion ? 'Editar promoción' : 'Nueva promoción'}
           </h3>
@@ -265,7 +265,7 @@ const PromocionModal = ({ promocion, onClose }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
             <input
@@ -388,7 +388,7 @@ const PromocionModal = ({ promocion, onClose }) => {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Válida desde</label>
               <input
@@ -422,7 +422,7 @@ const PromocionModal = ({ promocion, onClose }) => {
             Promoción activa
           </label>
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex flex-wrap justify-end gap-3 pt-4 border-t">
             <button
               type="button"
               onClick={onClose}

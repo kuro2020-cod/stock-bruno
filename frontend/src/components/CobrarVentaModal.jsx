@@ -205,18 +205,18 @@ export default function CobrarVentaModal({
 
   return (
     <div
-      className="fixed inset-0 z-[95] flex justify-center bg-black/50"
+      className="fixed inset-0 z-[95] flex justify-center sm:items-center bg-black/50 sm:p-4"
       onClick={onClose}
       role="presentation"
     >
       <div
-        className="bg-white dark:bg-slate-900 w-full max-w-3xl h-dvh max-h-dvh overflow-hidden flex flex-col shadow-2xl"
+        className="bg-white dark:bg-slate-900 w-full max-w-3xl h-dvh max-h-dvh overflow-hidden flex flex-col shadow-2xl sm:h-auto sm:max-h-[92dvh] sm:rounded-2xl sm:my-4"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="cobrar-venta-titulo"
       >
-        <div className="shrink-0 px-6 sm:px-8 py-5 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between gap-3">
+        <div className="shrink-0 px-4 sm:px-8 py-4 sm:py-5 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between gap-3">
           <h3 id="cobrar-venta-titulo" className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-slate-50">
             {metodoUnico === 'retiro' ? 'Retiro de mercadería' : 'Cobrar venta'}
           </h3>
@@ -231,7 +231,7 @@ export default function CobrarVentaModal({
           </button>
         </div>
 
-        <div className="shrink-0 px-6 sm:px-8 py-4 sm:py-5 text-center border-b border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <div className="shrink-0 px-4 sm:px-8 py-4 sm:py-5 text-center border-b border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900">
           <p className="text-sm font-bold uppercase tracking-widest text-gray-500 dark:text-slate-400">
             {metodoUnico === 'retiro' ? 'Valor estimado' : 'Total a pagar'}
           </p>
@@ -244,7 +244,7 @@ export default function CobrarVentaModal({
           </p>
         </div>
 
-        <div className="px-6 sm:px-8 py-5 sm:py-6 space-y-6 overflow-y-auto flex-1 min-h-0">
+        <div className="px-4 sm:px-8 py-5 sm:py-6 space-y-6 overflow-y-auto flex-1 min-h-0">
           {esDevolucionEnvase && (
             <p className="text-xs text-emerald-800 dark:text-emerald-200 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-700 rounded-lg px-3 py-2">
               Devolución de envase: elegí un solo método para devolver el dinero.
@@ -462,7 +462,7 @@ export default function CobrarVentaModal({
           )}
         </div>
 
-        <div className="shrink-0 px-6 sm:px-8 py-5 border-t border-gray-100 dark:border-slate-700 flex gap-3">
+        <div className="shrink-0 px-4 sm:px-8 py-4 sm:py-5 border-t border-gray-100 dark:border-slate-700 flex flex-col-reverse sm:flex-row gap-3">
           <button
             type="button"
             onClick={onClose}

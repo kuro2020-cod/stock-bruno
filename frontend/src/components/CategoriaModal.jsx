@@ -46,9 +46,9 @@ const CategoriaModal = ({ categoria, onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="modal-panel max-w-md">
-        <div className="flex justify-between items-center p-6 border-b">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b">
           <h3 className="text-xl font-semibold text-gray-800">
             {categoria ? 'Editar Categoría' : 'Nueva Categoría'}
           </h3>
@@ -57,7 +57,7 @@ const CategoriaModal = ({ categoria, onClose }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
             <input
@@ -81,7 +81,7 @@ const CategoriaModal = ({ categoria, onClose }) => {
             />
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          <div className="flex flex-wrap justify-end gap-3 pt-4 border-t">
             <button
               type="button"
               onClick={onClose}

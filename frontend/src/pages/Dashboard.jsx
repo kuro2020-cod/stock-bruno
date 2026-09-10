@@ -184,7 +184,7 @@ const Dashboard = () => {
       </div>
 
       <div className="mb-8">
-        <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h3 className="text-lg font-semibold text-slate-800">Contadores de ventas</h3>
           <button type="button" className="btn-primary btn-sm inline-flex items-center gap-1.5" onClick={abrirModalContador}>
             <Plus size={16} />
@@ -318,7 +318,7 @@ const Dashboard = () => {
           <TrendingUp className="mr-2" size={20} />
           Movimientos de Hoy
         </h3>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <p className="text-gray-600 text-sm">Total Movimientos</p>
             <p className="text-2xl font-bold text-gray-800">
@@ -342,7 +342,7 @@ const Dashboard = () => {
 
       {productosVencer.length > 0 && (
         <div className="bg-amber-50 rounded-lg shadow p-6 mb-8 border-l-4 border-amber-500">
-          <div className="flex justify-between items-center mb-3">
+          <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
             <h3 className="text-xl font-semibold text-amber-950 flex items-center">
               <AlertTriangle className="mr-2 text-amber-600" size={20} />
               Vencimientos ({productosVencer.length})

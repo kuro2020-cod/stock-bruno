@@ -120,14 +120,14 @@ const CargaProductos = () => {
         </p>
       </div>
 
-      <div className="flex rounded-xl border border-gray-200 bg-white p-1 shadow-sm mb-8 w-fit">
+      <div className="flex w-full sm:w-fit rounded-xl border border-gray-200 bg-white p-1 shadow-sm mb-8">
         <button
           type="button"
           onClick={() => {
             setModo('escaner')
             setMensaje(null)
           }}
-          className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-colors ${
+          className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-lg px-3 sm:px-5 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
             modo === 'escaner' ? 'bg-blue-600 text-white shadow' : 'text-gray-600 hover:bg-gray-50'
           }`}
         >
@@ -137,7 +137,7 @@ const CargaProductos = () => {
         <button
           type="button"
           onClick={() => setModo('manual')}
-          className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-colors ${
+          className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-lg px-3 sm:px-5 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
             modo === 'manual' ? 'bg-blue-600 text-white shadow' : 'text-gray-600 hover:bg-gray-50'
           }`}
         >

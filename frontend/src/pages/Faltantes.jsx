@@ -303,7 +303,7 @@ const Faltantes = () => {
         <button
           type="button"
           onClick={() => setTab('registros')}
-          className={`flex-1 inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
+          className={`flex-1 inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors ${
             tab === 'registros' ? 'bg-rose-600 text-white' : 'text-gray-600 hover:bg-gray-50'
           }`}
         >
@@ -313,7 +313,7 @@ const Faltantes = () => {
         <button
           type="button"
           onClick={() => setTab('stock_bajo')}
-          className={`flex-1 inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
+          className={`flex-1 inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors ${
             tab === 'stock_bajo' ? 'bg-amber-600 text-white' : 'text-gray-600 hover:bg-gray-50'
           }`}
         >

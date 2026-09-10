@@ -71,13 +71,13 @@ const Estadisticas = () => {
               <Calendar size={16} />
               Período
             </label>
-            <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
+            <div className="flex flex-wrap gap-1 rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
               {PERIODOS.map((p) => (
                 <button
                   key={p.value}
                   type="button"
                   onClick={() => setPeriodo(p.value)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     periodo === p.value ? 'bg-brand-600 text-white shadow-soft' : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >

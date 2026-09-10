@@ -41,7 +41,7 @@ const Login = () => {
       />
 
       <div className="relative w-full max-w-md animate-slide-up">
-        <div className="card p-8 sm:p-10 shadow-card border-white/20 bg-white/95 backdrop-blur-xl">
+        <div className="card p-6 sm:p-10 shadow-card border-white/20 bg-white/95 backdrop-blur-xl">
           <div className="flex flex-col items-center mb-8 text-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center shadow-glow mb-4">
               <Boxes className="text-white" size={32} />

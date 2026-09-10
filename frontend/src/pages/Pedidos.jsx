@@ -90,14 +90,14 @@ const Pedidos = () => {
     setSortDir('asc')
   }
 
-  const encabezadoOrden = (key, label, align = 'left') => {
+  const encabezadoOrden = (key, label, align = 'left', extraClass = '') => {
     const activo = sortKey === key
     const justify = align === 'right' ? 'justify-end text-right' : 'justify-start text-left'
     return (
       <th
-        className={`px-6 py-3 text-xs font-medium uppercase ${
+        className={`px-3 sm:px-6 py-3 text-xs font-medium uppercase ${
           align === 'right' ? 'text-right' : 'text-left'
-        }`}
+        } ${extraClass}`}
       >
         <button
           type="button"
@@ -434,9 +434,9 @@ const Pedidos = () => {
               <thead className="bg-gray-50 dark:bg-slate-800">
                 <tr>
                   {encabezadoOrden('nombre', 'Producto')}
-                  {encabezadoOrden('categoria', 'Categorías')}
+                  {encabezadoOrden('categoria', 'Categorías', 'left', 'hidden md:table-cell')}
                   {encabezadoOrden('stock', 'Stock', 'right')}
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-slate-400">
+                  <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-slate-400">
                     Cantidad a pedir
                   </th>
                 </tr>
@@ -447,7 +447,7 @@ const Pedidos = () => {
                   const qty = cantidadDe(p)
                   return (
                     <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/70">
-                      <td className="px-6 py-3">
+                      <td className="px-3 sm:px-6 py-3">
                         <div className="text-sm font-medium text-gray-900 dark:text-slate-100">
                           {p.nombre}
                         </div>
@@ -457,7 +457,7 @@ const Pedidos = () => {
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-slate-300">
+                      <td className="px-3 sm:px-6 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-slate-300 hidden md:table-cell">
                         <CategoriaProductoSelect
                           productoId={p.id}
                           categoriaId={p.categoria_id}
@@ -471,7 +471,7 @@ const Pedidos = () => {
                           }
                         />
                       </td>
-                      <td className="px-6 py-3 whitespace-nowrap text-right text-sm tabular-nums">
+                      <td className="px-3 sm:px-6 py-3 whitespace-nowrap text-right text-sm tabular-nums">
                         {productoNoControlaStock(p) ? (
                           <span className="text-violet-700 dark:text-violet-300">Sin stock</span>
                         ) : (
@@ -480,7 +480,7 @@ const Pedidos = () => {
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-3">
+                      <td className="px-3 sm:px-6 py-3">
                         <div className="flex items-center justify-center gap-2">
                           <button
                             type="button"

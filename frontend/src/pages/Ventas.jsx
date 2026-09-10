@@ -2232,7 +2232,7 @@ const Ventas = () => {
 
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-[100] max-w-sm rounded-xl border px-5 py-4 text-white shadow-lg ${
+          className={`fixed left-4 right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] sm:left-auto sm:right-6 sm:bottom-6 z-[100] sm:max-w-sm rounded-xl border px-4 sm:px-5 py-3 sm:py-4 text-white shadow-lg ${
             toast.type === 'venta'
               ? 'border-emerald-600 bg-emerald-900'
               : toast.variant === 'error'
@@ -2276,17 +2276,17 @@ const Ventas = () => {
         </div>
       )}
 
-      <header className="page-header flex flex-wrap items-center justify-between gap-4">
+      <header className="page-header flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3">
         <h2 className="page-title mb-0">
-          <ShoppingCart className="text-brand-600" size={32} />
+          <ShoppingCart className="text-brand-600 shrink-0" size={28} />
           Ventas
         </h2>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <button
             type="button"
             onClick={reiniciarContadorCafe}
             disabled={reiniciandoCafe || necesitaApertura}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm shadow-sm disabled:opacity-50"
+            className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm shadow-sm disabled:opacity-50"
             title="Pone el contador en 0 y deja el reporte en Movimientos"
           >
             {reiniciandoCafe ? (
@@ -2295,12 +2295,13 @@ const Ventas = () => {
               <Coffee size={18} />
             )}
             <RotateCcw size={16} className="opacity-90" />
-            Reiniciar contador café
+            <span className="sm:hidden">Reiniciar café</span>
+            <span className="hidden sm:inline">Reiniciar contador café</span>
           </button>
           <button
             type="button"
             onClick={abrirConsultar}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-sm"
+            className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-sm"
           >
             <Search size={18} />
             Consultar
@@ -2674,7 +2675,7 @@ const Ventas = () => {
       )}
 
       <div className="flex flex-col gap-6 w-full">
-        <div className="card p-6 w-full">
+        <div className="card p-4 sm:p-6 w-full">
           <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
             <ScanBarcode size={18} className="text-brand-600" />
             Buscar o escanear producto
@@ -2883,7 +2884,7 @@ const Ventas = () => {
                   return (
                     <div key={lineId} className="p-4 sm:p-5 space-y-3">
                       <div className="flex justify-between gap-3 items-start">
-                        <div className="min-w-0 flex-1 max-w-sm">
+                        <div className="min-w-0 flex-1 lg:max-w-sm">
                           <p className="font-medium text-gray-900 leading-snug line-clamp-2">{line.nombre}</p>
                           {esEnvase && line.envase_de_nombre && (
                             <p className="text-xs text-sky-800 mt-1">Por: {line.envase_de_nombre}</p>
@@ -3093,7 +3094,7 @@ const Ventas = () => {
                       {fmtMoney(total)}
                     </p>
                   </div>
-                  <div className="mt-auto grid grid-cols-2 gap-2">
+                  <div className="mt-auto grid grid-cols-1 min-[420px]:grid-cols-2 gap-2">
                     <button
                       type="button"
                       disabled={cart.length === 0 || submitting}

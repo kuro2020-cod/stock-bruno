@@ -53,7 +53,7 @@ const AlertaVencimientos = () => {
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        className={`fixed bottom-6 right-6 z-40 inline-flex items-center justify-center w-12 h-12 rounded-full shadow-lg border-2 print:hidden ${
+        className={`fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-40 inline-flex items-center justify-center w-12 h-12 rounded-full shadow-lg border-2 print:hidden ${
           urgente
             ? 'bg-red-600 border-red-300 text-white hover:bg-red-700'
             : 'bg-amber-500 border-amber-200 text-white hover:bg-amber-600'

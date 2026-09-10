@@ -30,7 +30,8 @@ import {
   Sparkles,
   ChevronDown,
   Settings,
-  CalendarClock
+  CalendarClock,
+  Menu
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -46,9 +47,28 @@ const Layout = ({ children }) => {
   const isAdmin = user?.rol === 'ADMIN'
   const limitado = esAccesoLimitado(user)
   const cajaBloqueada = !limitado && cajaSesion
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)').matches : true
+  )
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)').matches : true
+  )
   const [showArqueo, setShowArqueo] = useState(false)
   const [openGroups, setOpenGroups] = useState({})
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const onChange = () => {
+      setIsDesktop(mq.matches)
+      setSidebarOpen(mq.matches)
+    }
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  useEffect(() => {
+    if (!isDesktop) setSidebarOpen(false)
+  }, [location.pathname, isDesktop])
 
   const visibleItem = (item) => {
     if (item.hideIfLimitado && limitado) return false
@@ -158,6 +178,10 @@ const Layout = ({ children }) => {
     return 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-200 font-medium w-full'
   }
 
+  const cerrarMenuMovil = () => {
+    if (!isDesktop) setSidebarOpen(false)
+  }
+
   const renderThemeToggle = () => (
     <button
       type="button"
@@ -178,8 +202,8 @@ const Layout = ({ children }) => {
           : 'bg-white'
       }`}
     >
-      {!sidebarOpen && (
-        <div className="fixed inset-y-0 left-0 z-50 w-14 flex flex-col items-center border-r border-slate-800/50 bg-slate-900 pt-5 gap-2 shadow-xl print:hidden">
+      {!sidebarOpen && isDesktop && (
+        <div className="fixed inset-y-0 left-0 z-50 w-14 hidden md:flex flex-col items-center border-r border-slate-800/50 bg-slate-900 pt-5 gap-2 shadow-xl print:hidden">
           <button
             type="button"
             onClick={() => !cajaBloqueada && setSidebarOpen(true)}
@@ -193,8 +217,17 @@ const Layout = ({ children }) => {
         </div>
       )}
 
+      {sidebarOpen && !isDesktop && (
+        <button
+          type="button"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px] print:hidden md:hidden"
+          aria-label="Cerrar menú"
+          onClick={cerrarMenuMovil}
+        />
+      )}
+
       <aside
-        className={`fixed inset-y-0 left-0 w-[17rem] bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 flex flex-col transition-transform duration-300 z-40 shadow-2xl print:hidden ${
+        className={`fixed inset-y-0 left-0 w-[17rem] max-w-[85vw] bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 flex flex-col transition-transform duration-300 z-50 shadow-2xl print:hidden ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -275,7 +308,7 @@ const Layout = ({ children }) => {
                 )
               }
               return (
-                <Link key={item.path} to={item.path} className={navItemClass(isActive)}>
+                <Link key={item.path} to={item.path} className={navItemClass(isActive)} onClick={cerrarMenuMovil}>
                   <Icon size={18} className="shrink-0 opacity-90" />
                   <span>{item.label}</span>
                 </Link>
@@ -336,6 +369,7 @@ const Layout = ({ children }) => {
                           key={item.path}
                           to={item.path}
                           className={`${navItemClass(isActive)} !py-2 text-sm`}
+                          onClick={cerrarMenuMovil}
                         >
                           <Icon size={16} className="shrink-0 opacity-90" />
                           <span>{item.label}</span>
@@ -366,12 +400,35 @@ const Layout = ({ children }) => {
 
       <div
         className={`min-h-screen min-w-0 overflow-x-hidden transition-all duration-300 print:ml-0 relative ${
-          sidebarOpen ? 'ml-[17rem]' : 'ml-14'
+          isDesktop ? (sidebarOpen ? 'ml-[17rem]' : 'ml-14') : 'ml-0'
         }`}
       >
+        <header className="sticky top-0 z-30 flex items-center gap-3 px-3 py-2.5 border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90 md:hidden print:hidden">
+          <button
+            type="button"
+            onClick={() => !cajaBloqueada && setSidebarOpen(true)}
+            disabled={cajaBloqueada}
+            className="inline-flex items-center justify-center p-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50"
+            aria-label="Abrir menú"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-slate-900 dark:text-slate-50 truncate">Control de Stock</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{displayName}</p>
+          </div>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="shrink-0 p-2 rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10"
+            aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          >
+            {isDark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} />}
+          </button>
+        </header>
         {cajaBloqueada && (
-          <div className="absolute inset-0 z-30 flex items-start justify-center bg-slate-900/50 backdrop-blur-sm print:hidden p-6 pt-16">
-            <div className="max-w-lg w-full card p-8 text-center shadow-card animate-slide-up border-amber-200/60 dark:border-amber-500/30">
+          <div className="absolute inset-0 z-30 flex items-start justify-center bg-slate-900/50 backdrop-blur-sm print:hidden p-4 pt-20 sm:p-6 sm:pt-16 overflow-y-auto">
+            <div className="max-w-lg w-full card p-5 sm:p-8 text-center shadow-card animate-slide-up border-amber-200/60 dark:border-amber-500/30">
               <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center mb-4">
                 <Lock className="text-amber-600 dark:text-amber-300" size={28} />
               </div>
@@ -545,7 +602,7 @@ const Layout = ({ children }) => {
         )}
 
         <main
-          className={`p-6 sm:p-8 lg:p-10 max-w-[1600px] mx-auto min-w-0 animate-fade-in ${
+          className={`p-3 sm:p-6 lg:p-10 max-w-[1600px] mx-auto min-w-0 animate-fade-in ${
             cajaBloqueada ? 'pointer-events-none select-none opacity-40' : ''
           }`}
         >

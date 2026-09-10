@@ -7,9 +7,24 @@
     scroll-behavior: smooth;
   }
 
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
 body {
     @apply bg-slate-50 text-slate-800 antialiased;
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  @media (max-width: 639px) {
+    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
   }
 
   html.dark {
@@ -31,7 +46,7 @@ body {
 
 @layer components {
   .page-title {
-    @apply text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3 dark:text-slate-50;
+    @apply text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 flex flex-wrap items-center gap-2 sm:gap-3 dark:text-slate-50;
   }
 
   .page-subtitle {
@@ -39,7 +54,11 @@ body {
   }
 
   .page-header {
-    @apply mb-8 animate-slide-up;
+    @apply mb-5 sm:mb-8 animate-slide-up;
+  }
+
+  .page-toolbar {
+    @apply flex flex-col gap-3 mb-6 sm:mb-8 sm:flex-row sm:items-center sm:justify-between;
   }
 
   .card {
@@ -150,7 +169,7 @@ body {
   }
 
   .modal-panel {
-    @apply bg-white rounded-2xl shadow-card border border-slate-200/80 w-full max-h-[90vh] overflow-y-auto animate-slide-up
+    @apply bg-white rounded-2xl shadow-card border border-slate-200/80 w-full max-h-[min(90dvh,90vh)] overflow-y-auto animate-slide-up
       dark:bg-slate-900 dark:border-slate-700/80 dark:shadow-none;
   }
 
@@ -188,6 +207,13 @@ body {
 
   main table tbody tr:hover {
     @apply bg-brand-50/30 transition-colors;
+  }
+
+  @media (max-width: 639px) {
+    main table th,
+    main table td {
+      @apply px-3 py-2.5;
+    }
   }
 }
 

@@ -259,7 +259,7 @@ const MovimientosRegistro = () => {
         </Link>
       </div>
 
-      <div className="flex justify-between items-center mb-8">
+      <div className="page-toolbar">
         <h2 className="page-title">Movimientos</h2>
       </div>
 
@@ -349,29 +349,29 @@ const MovimientosRegistro = () => {
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-scroll overflow-y-auto max-h-[65vh]">
+          <div className="overflow-x-auto overflow-y-auto max-h-[65vh]">
             <table className="min-w-full">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Cantidad</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">P. venta</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Importe</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Motivo</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Metodo de pago</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Código</th>
+                  <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                  <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Cantidad</th>
+                  <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">P. venta</th>
+                  <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Importe</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden xl:table-cell">Motivo</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Metodo de pago</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">Usuario</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {movimientosPaginados.map((movimiento) => (
                   <tr key={movimiento.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatDate(movimiento.fecha)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium text-gray-900">
                       {movimiento.tipo === 'pago_proveedor' ? (
                         <span title="Proveedor">{movimiento.producto_nombre}</span>
                       ) : movimiento._esPromoAgrupada ? (
@@ -385,10 +385,10 @@ const MovimientosRegistro = () => {
                         movimiento.producto_nombre
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
                       {movimiento.tipo === 'pago_proveedor' ? '—' : movimiento.producto_codigo || '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center space-x-2">
                         {getTipoIcon(movimiento.tipo)}
                         <span
@@ -398,7 +398,7 @@ const MovimientosRegistro = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900 hidden sm:table-cell">
                       {movimiento.tipo === 'pago_proveedor' ? (
                         '—'
                       ) : (
@@ -411,7 +411,7 @@ const MovimientosRegistro = () => {
                         </>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-600">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm text-gray-600 hidden lg:table-cell">
                       {precioVentaMov(movimiento) != null
                         ? `$${precioVentaMov(movimiento).toLocaleString('es-ES', {
                             minimumFractionDigits: 2,
@@ -420,7 +420,7 @@ const MovimientosRegistro = () => {
                         : '—'}
                     </td>
                     <td
-                      className={`px-6 py-4 whitespace-nowrap text-right text-sm font-medium ${
+                      className={`px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm font-medium ${
                         importeSalida(movimiento) != null && importeSalida(movimiento) < 0
                           ? 'text-red-700'
                           : 'text-gray-800'
@@ -430,14 +430,14 @@ const MovimientosRegistro = () => {
                         ? `${importeSalida(movimiento) < 0 ? '-' : ''}${fmtImporte(importeSalida(movimiento))}`
                         : '—'}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{movimiento.motivo || '-'}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-500 hidden xl:table-cell">{movimiento.motivo || '-'}</td>
                     <td
-                      className="px-6 py-4 text-sm text-gray-600 max-w-[16rem]"
+                      className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-600 max-w-[16rem] hidden md:table-cell"
                       title={textoMetodoPago(movimiento)}
                     >
                       <span className="line-clamp-2">{textoMetodoPago(movimiento)}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
                       {movimiento.usuario || 'Sistema'}
                     </td>
                   </tr>
@@ -445,7 +445,7 @@ const MovimientosRegistro = () => {
               </tbody>
             </table>
           </div>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-gray-200">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-3 px-3 sm:px-6 py-4 border-t border-gray-200">
             <p className="text-sm text-gray-600">
               Mostrando {movimientosFiltrados.length === 0 ? 0 : startIndex + 1} a{' '}
               {Math.min(startIndex + itemsPerPage, movimientosFiltrados.length)} de {movimientosFiltrados.length}{' '}

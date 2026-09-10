@@ -46,12 +46,12 @@ const compararValores = (a, b) => {
 }
 
 const COLUMNAS_ORDEN = [
-  { key: 'codigo', label: 'Código', align: 'left' },
+  { key: 'codigo', label: 'Código', align: 'left', cellClass: 'hidden sm:table-cell' },
   { key: 'nombre', label: 'Nombre', align: 'left' },
-  { key: 'categoria', label: 'Categoría', align: 'left' },
+  { key: 'categoria', label: 'Categoría', align: 'left', cellClass: 'hidden lg:table-cell' },
   { key: 'stock', label: 'Stock', align: 'right' },
-  { key: 'vencimiento', label: 'Vencimiento', align: 'left' },
-  { key: 'precio_compra', label: 'Precio Compra', align: 'right' },
+  { key: 'vencimiento', label: 'Vencimiento', align: 'left', cellClass: 'hidden md:table-cell' },
+  { key: 'precio_compra', label: 'Precio Compra', align: 'right', cellClass: 'hidden xl:table-cell' },
   { key: 'precio_venta', label: 'Precio Venta', align: 'right' }
 ]
 
@@ -260,7 +260,7 @@ const Productos = () => {
       ) : (
         <div className="bg-white rounded-lg shadow dark:bg-slate-900 min-w-0 max-w-full">
           <div className="overflow-x-auto overflow-y-visible w-full min-w-0 max-w-full [scrollbar-width:thin]">
-            <table className="w-max min-w-full">
+            <table className="min-w-full">
               <thead className="bg-gray-50 dark:bg-slate-800">
                 <tr>
                   {COLUMNAS_ORDEN.map((col) => {
@@ -270,9 +270,9 @@ const Productos = () => {
                     return (
                       <th
                         key={col.key}
-                        className={`px-6 py-3 text-xs font-medium uppercase ${
+                        className={`px-3 sm:px-6 py-3 text-xs font-medium uppercase ${
                           col.align === 'right' ? 'text-right' : 'text-left'
-                        }`}
+                        } ${col.cellClass || ''}`}
                       >
                         <button
                           type="button"
@@ -301,22 +301,22 @@ const Productos = () => {
                       </th>
                     )
                   })}
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                  <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {productosPaginados.map((producto) => (
                   <tr key={producto.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">
                       {producto.codigo || '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
                       <div className="text-sm font-medium text-gray-900">{producto.nombre}</div>
                       {producto.descripcion && (
-                        <div className="text-sm text-gray-500">{producto.descripcion}</div>
+                        <div className="text-sm text-gray-500 line-clamp-2">{producto.descripcion}</div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
                       <CategoriaProductoSelect
                         productoId={producto.id}
                         categoriaId={producto.categoria_id}
@@ -328,7 +328,7 @@ const Productos = () => {
                         }
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right">
                       {productoNoControlaStock(producto) ? (
                         <span className="text-sm font-medium text-violet-700">Sin stock</span>
                       ) : (
@@ -350,7 +350,7 @@ const Productos = () => {
                         </>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm hidden md:table-cell">
                       {productoNoVerificaVencimiento(producto) ? (
                         <span className="text-gray-400">{productoNoControlaStock(producto) ? '—' : 'No verifica'}</span>
                       ) : producto.fecha_vencimiento ? (
@@ -377,13 +377,13 @@ const Productos = () => {
                         <span className="text-amber-700 text-xs">Sin fecha</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm text-gray-900 hidden xl:table-cell">
                       ${Number(producto.precio_compra || 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm text-gray-900">
                       ${Number(producto.precio_venta || 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-sm font-medium">
                       <div className="flex justify-center space-x-2">
                         <button
                           onClick={() => handleEdit(producto)}
@@ -406,7 +406,7 @@ const Productos = () => {
               </tbody>
             </table>
           </div>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-gray-200 dark:border-slate-700">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-3 px-3 sm:px-6 py-4 border-t border-gray-200 dark:border-slate-700">
             <p className="text-sm text-gray-600 dark:text-slate-400">
               Mostrando {productosFiltrados.length === 0 ? 0 : startIndex + 1} a{' '}
               {Math.min(startIndex + ITEMS_POR_PAGINA, productosFiltrados.length)} de {productosFiltrados.length}{' '}

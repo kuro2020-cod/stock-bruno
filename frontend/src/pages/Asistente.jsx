@@ -102,7 +102,7 @@ const Asistente = () => {
   const iaOk = Boolean(estado?.ia_configurada)
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="flex flex-col min-h-[calc(100dvh-8rem)]">
       <header className="page-header mb-4">
         <h2 className="page-title flex items-center gap-2">
           <Sparkles size={26} className="text-violet-600" />
@@ -252,13 +252,13 @@ const Asistente = () => {
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             placeholder="Ej. Creá la categoría Galletitas y meté lo que diga Oreo o Rumba"
-            className="flex-1 px-3 py-2.5 border border-gray-300 rounded-xl text-sm"
+            className="min-w-0 flex-1 px-3 py-2.5 border border-gray-300 rounded-xl text-sm"
             disabled={enviando || ejecutando}
           />
           <button
             type="submit"
             disabled={enviando || ejecutando || !texto.trim()}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-violet-700 text-white font-semibold text-sm hover:bg-violet-800 disabled:opacity-50"
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-xl bg-violet-700 text-white font-semibold text-sm hover:bg-violet-800 disabled:opacity-50"
           >
             <Send size={16} />
             Enviar

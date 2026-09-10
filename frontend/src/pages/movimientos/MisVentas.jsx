@@ -288,21 +288,21 @@ const MisVentas = () => {
             <table className="min-w-full">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Cantidad</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">P. venta</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Importe</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Método</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Motivo</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Código</th>
+                  <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Cantidad</th>
+                  <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">P. venta</th>
+                  <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Importe</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Método</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden xl:table-cell">Motivo</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {ventasFiltradas.map((m) => (
                   <tr key={m.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{fmtDate(m.fecha)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900">{fmtDate(m.fecha)}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium text-gray-900">
                       {m._esPromoAgrupada ? (
                         <span>
                           <span className="inline-flex items-center px-1.5 py-0.5 mr-1.5 rounded text-[10px] font-bold uppercase tracking-wide bg-violet-100 text-violet-800">
@@ -314,23 +314,23 @@ const MisVentas = () => {
                         m.producto_nombre
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{m.producto_codigo || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{m.producto_codigo || '-'}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-right text-gray-900 hidden sm:table-cell">
                       {Number(m.cantidad).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 3 })}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-700">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-right text-gray-700 hidden lg:table-cell">
                       {precioVentaMov(m) != null ? fmtMoney(precioVentaMov(m)) : '—'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-800">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-right font-medium text-gray-800">
                       {importeSalida(m) != null ? fmtMoney(importeSalida(m)) : '—'}
                     </td>
                     <td
-                      className="px-6 py-4 text-sm text-gray-700 max-w-[14rem]"
+                      className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-700 max-w-[14rem] hidden md:table-cell"
                       title={textoMetodoPago(m)}
                     >
                       <span className="line-clamp-2">{textoMetodoPago(m)}</span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{m.motivo || '-'}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-500 hidden xl:table-cell">{m.motivo || '-'}</td>
                   </tr>
                 ))}
               </tbody>
