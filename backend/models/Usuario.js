@@ -10,11 +10,18 @@ function normalizeRol(rol) {
   return 'USER';
 }
 
+function asBool(v, def = true) {
+  if (v === undefined || v === null) return def;
+  if (v === true || v === 1 || v === '1' || v === 't' || v === 'true') return true;
+  if (v === false || v === 0 || v === '0' || v === 'f' || v === 'false') return false;
+  return def;
+}
+
 export class Usuario {
   static async getAll() {
     // No pedir created_at: tablas creadas a mano a veces no tienen esa columna y la query fallaba en silencio en el front
     return db.all(`
-      SELECT id, nombre, apellido, dni, usuario, rol
+      SELECT id, nombre, apellido, dni, usuario, rol, acceso_externo
       FROM usuario
       ORDER BY apellido, nombre
     `);
@@ -23,11 +30,17 @@ export class Usuario {
   static async getById(id) {
     return db.get(
       `
-      SELECT id, nombre, apellido, dni, usuario, rol
+      SELECT id, nombre, apellido, dni, usuario, rol, acceso_externo
       FROM usuario WHERE id = ?
     `,
       [id]
     );
+  }
+
+  static async permiteAccesoExterno(id) {
+    const row = await db.get(`SELECT acceso_externo FROM usuario WHERE id = ?`, [id]);
+    if (!row) return false;
+    return asBool(row.acceso_externo, true);
   }
 
   /**
@@ -35,7 +48,7 @@ export class Usuario {
    */
   static async autenticar(usuario, clavePlano) {
     const row = await db.get(
-      `SELECT id, nombre, apellido, dni, usuario, rol, clave FROM usuario WHERE LOWER(usuario) = LOWER(?)`,
+      `SELECT id, nombre, apellido, dni, usuario, rol, clave, acceso_externo FROM usuario WHERE LOWER(usuario) = LOWER(?)`,
       [String(usuario).trim()]
     );
     if (!row) return null;
@@ -56,12 +69,13 @@ export class Usuario {
       apellido: row.apellido,
       dni: row.dni,
       usuario: row.usuario,
-      rol: normalizeRol(row.rol)
+      rol: normalizeRol(row.rol),
+      accesoExternoPermitido: asBool(row.acceso_externo, true)
     };
   }
 
   static async create(data) {
-    const { nombre, apellido, dni, usuario, clave, rol } = data;
+    const { nombre, apellido, dni, usuario, clave, rol, acceso_externo } = data;
 
     if (!nombre?.trim()) throw new Error('El nombre es requerido');
     if (!apellido?.trim()) throw new Error('El apellido es requerido');
@@ -84,16 +98,18 @@ export class Usuario {
     if (dupDni) throw new Error('Ya existe un usuario con ese DNI');
 
     const hash = await bcrypt.hash(String(clave).trim(), SALT_ROUNDS);
+    const accesoExterno = asBool(acceso_externo, true);
     const result = await db.run(
-      `INSERT INTO usuario (nombre, apellido, dni, usuario, clave, rol)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO usuario (nombre, apellido, dni, usuario, clave, rol, acceso_externo)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         nombre.trim(),
         apellido.trim(),
         dniNorm,
         usuarioNorm,
         hash,
-        normalizeRol(rol)
+        normalizeRol(rol),
+        accesoExterno
       ]
     );
     return this.getById(result.lastID);
@@ -110,6 +126,10 @@ export class Usuario {
     const dni = data.dni?.trim() ?? existente.dni;
     const usuario = (data.usuario?.trim() ?? existente.usuario).toLowerCase();
     const rol = normalizeRol(data.rol ?? existente.rol);
+    const accesoExterno = asBool(
+      data.acceso_externo ?? data.accesoExterno ?? existente.acceso_externo,
+      true
+    );
 
     if (!nombre) throw new Error('El nombre es requerido');
     if (!apellido) throw new Error('El apellido es requerido');
@@ -137,13 +157,13 @@ export class Usuario {
     if (nuevaClave) {
       const hash = await bcrypt.hash(String(data.clave).trim(), SALT_ROUNDS);
       await db.run(
-        `UPDATE usuario SET nombre = ?, apellido = ?, dni = ?, usuario = ?, clave = ?, rol = ? WHERE id = ?`,
-        [nombre, apellido, dni, usuario, hash, rol, id]
+        `UPDATE usuario SET nombre = ?, apellido = ?, dni = ?, usuario = ?, clave = ?, rol = ?, acceso_externo = ? WHERE id = ?`,
+        [nombre, apellido, dni, usuario, hash, rol, accesoExterno, id]
       );
     } else {
       await db.run(
-        `UPDATE usuario SET nombre = ?, apellido = ?, dni = ?, usuario = ?, rol = ? WHERE id = ?`,
-        [nombre, apellido, dni, usuario, rol, id]
+        `UPDATE usuario SET nombre = ?, apellido = ?, dni = ?, usuario = ?, rol = ?, acceso_externo = ? WHERE id = ?`,
+        [nombre, apellido, dni, usuario, rol, accesoExterno, id]
       );
     }
 

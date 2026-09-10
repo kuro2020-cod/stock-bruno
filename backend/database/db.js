@@ -362,6 +362,11 @@ const initDatabase = async () => {
     `);
 
     await query(`
+      ALTER TABLE usuario
+      ADD COLUMN IF NOT EXISTS acceso_externo BOOLEAN NOT NULL DEFAULT TRUE
+    `);
+
+    await query(`
       ALTER TABLE cierres_caja
       ADD COLUMN IF NOT EXISTS usuario_id INTEGER REFERENCES usuario(id)
     `);

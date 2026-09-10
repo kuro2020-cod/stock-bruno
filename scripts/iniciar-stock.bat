@@ -42,6 +42,7 @@ echo Iniciando en http://localhost:3001
 echo (Otras PCs en la red: mirá la IP que muestra el servidor al arrancar)
 echo Si no conecta desde otra PC, ejecutá scripts\permitir-acceso-red.bat como Administrador.
 echo.
+start "" /b wscript.exe "%~dp0tunel-oculto.vbs"
 pushd backend
 node server.js
 popd

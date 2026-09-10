@@ -16,6 +16,12 @@ router.post('/login', async (req, res) => {
     if (!user) {
       return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
     }
+    const accesoExterno = esAccesoDesdeFuera(req);
+    if (accesoExterno && !user.accesoExternoPermitido) {
+      return res.status(403).json({
+        error: 'Este usuario no tiene permitido ingresar desde internet.'
+      });
+    }
     const token = jwt.sign(
       {
         id: user.id,
@@ -27,7 +33,6 @@ router.post('/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '7d' }
     );
-    const accesoExterno = esAccesoDesdeFuera(req);
     res.json({
       token,
       accesoExterno,

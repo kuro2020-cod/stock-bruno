@@ -14,7 +14,14 @@ function hostDeLaPeticion(req) {
 export function esHostTunelOPublico(host) {
   const h = String(host || '').toLowerCase();
   if (!h) return false;
-  if (h.includes('ngrok-free.app') || h.includes('ngrok.io') || h.includes('ngrok.app')) return true;
+  if (
+    h.includes('ngrok-free.app') ||
+    h.includes('ngrok-free.dev') ||
+    h.includes('ngrok.io') ||
+    h.includes('ngrok.app')
+  ) {
+    return true;
+  }
   if (h.endsWith('.trycloudflare.com')) return true;
   if (
     h.endsWith('.sytes.net') ||
@@ -53,26 +60,10 @@ export function esAccesoLimitado(req) {
   return esRolExterno(req.user?.rol) || esAccesoDesdeFuera(req);
 }
 
-/** Faltantes, Pedidos y lecturas necesarias para esas pantallas. */
-export function rutaPermitidaAccesoLimitado(method, originalUrl, rol) {
+/** Desde afuera / EXTERNO: todo el sistema excepto registrar ventas (POS). */
+export function rutaBloqueadaSinVentas(method, originalUrl) {
   const path = String(originalUrl || '').split('?')[0];
-  const m = String(method || 'GET').toUpperCase();
-
-  if (path.startsWith('/api/auth')) return true;
-  if (path === '/api/health') return true;
-  if (path.startsWith('/api/faltantes')) return true;
-  if (m === 'POST' && path.replace(/\/$/, '') === '/api/pedidos/enviar') return true;
-  if (m === 'GET' && path.startsWith('/api/categorias')) return true;
-
-  if (m === 'GET' && path.startsWith('/api/productos')) {
-    if (path.includes('/vencimientos') || path.includes('/codigo-sugerido')) return false;
-    return true;
-  }
-  if (m === 'PUT' && /^\/api\/productos\/\d+\/categoria$/.test(path)) return true;
-
-  if (path.startsWith('/api/reporte-faltantes') && String(rol || '').toUpperCase() === 'ADMIN') {
-    return true;
-  }
-
+  if (path === '/api/ventas' || path.startsWith('/api/ventas/')) return true;
+  if (path.startsWith('/api/mercadopago/qr/orden')) return true;
   return false;
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { Boxes, Lock } from 'lucide-react'
+import { Boxes, Lock, Globe } from 'lucide-react'
+import { esHostExterno } from '../utils/acceso'
 
 const Login = () => {
   const { login } = useAuth()
@@ -8,6 +9,7 @@ const Login = () => {
   const [clave, setClave] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const desdeInternet = esHostExterno()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -46,6 +48,15 @@ const Login = () => {
             </div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Control de Stock</h1>
             <p className="text-slate-500 text-sm mt-2">Iniciá sesión para continuar</p>
+            {desdeInternet && (
+              <p className="mt-3 text-xs text-sky-800 bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 flex gap-2 text-left">
+                <Globe size={14} className="shrink-0 mt-0.5" />
+                <span>
+                  Estás entrando por internet. Usá el mismo usuario del local. El módulo de
+                  Ventas no va a estar disponible.
+                </span>
+              </p>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">

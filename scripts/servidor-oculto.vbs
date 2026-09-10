@@ -55,32 +55,36 @@ Call LogLine("Node: " & nodeExe)
 
 If PuertoEnUso(puerto) Then
   Call LogLine("OK: ya hay algo escuchando en el puerto " & puerto)
-  WScript.Quit 0
-End If
-
-' Esperar un poco por PostgreSQL al inicio de Windows
-WScript.Sleep 3000
-
-' Generar un .bat temporal evita problemas de comillas con "Program Files"
-On Error Resume Next
-Set ts = fso.CreateTextFile(batFile, True)
-ts.WriteLine "@echo off"
-ts.WriteLine "cd /d """ & backend & """"
-ts.WriteLine "set NODE_ENV=production"
-ts.WriteLine """" & nodeExe & """ server.js >> """ & logFile & """ 2>&1"
-ts.Close
-On Error GoTo 0
-
-Call LogLine("Ejecutando bat temporal: " & batFile)
-sh.Run """" & batFile & """", 0, False
-
-WScript.Sleep 5000
-If PuertoEnUso(puerto) Then
-  Call LogLine("OK: servidor escuchando en " & puerto)
 Else
-  Call LogLine("AVISO: el puerto " & puerto & " sigue libre. Mira los errores en este mismo archivo (servidor.log).")
+  ' Esperar un poco por PostgreSQL al inicio de Windows
+  WScript.Sleep 3000
+
+  ' Generar un .bat temporal evita problemas de comillas con "Program Files"
+  On Error Resume Next
+  Set ts = fso.CreateTextFile(batFile, True)
+  ts.WriteLine "@echo off"
+  ts.WriteLine "cd /d """ & backend & """"
+  ts.WriteLine "set NODE_ENV=production"
+  ts.WriteLine """" & nodeExe & """ server.js >> """ & logFile & """ 2>&1"
+  ts.Close
+  On Error GoTo 0
+
+  Call LogLine("Ejecutando bat temporal: " & batFile)
+  sh.Run """" & batFile & """", 0, False
+
+  WScript.Sleep 5000
+  If PuertoEnUso(puerto) Then
+    Call LogLine("OK: servidor escuchando en " & puerto)
+  Else
+    Call LogLine("AVISO: el puerto " & puerto & " sigue libre. Mira los errores en este mismo archivo (servidor.log).")
+  End If
 End If
 
+If PuertoEnUso(puerto) Then
+  Call ArrancarTunel()
+Else
+  Call LogLine("Tunel no arrancado: el servidor no esta en el puerto " & puerto)
+End If
 WScript.Quit 0
 
 Sub LogLine(msg)
@@ -128,3 +132,14 @@ Function PuertoEnUso(p)
   If InStr(1, out, "LISTENING", vbTextCompare) > 0 Then PuertoEnUso = True
   On Error GoTo 0
 End Function
+
+Sub ArrancarTunel()
+  Dim tunel
+  tunel = scriptDir & "\tunel-oculto.vbs"
+  If Not fso.FileExists(tunel) Then
+    Call LogLine("AVISO: no existe tunel-oculto.vbs")
+    Exit Sub
+  End If
+  Call LogLine("Arrancando tunel ngrok...")
+  sh.Run "wscript.exe """ & tunel & """", 0, False
+End Sub

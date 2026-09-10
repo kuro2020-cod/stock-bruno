@@ -8,7 +8,8 @@ const emptyForm = {
   dni: '',
   usuario: '',
   clave: '',
-  rol: 'USER'
+  rol: 'USER',
+  acceso_externo: true
 }
 
 const UsuarioModal = ({ usuario, onClose }) => {
@@ -23,7 +24,8 @@ const UsuarioModal = ({ usuario, onClose }) => {
         dni: usuario.dni || '',
         usuario: usuario.usuario || '',
         clave: '',
-        rol: usuario.rol === 'ADMIN' ? 'ADMIN' : usuario.rol === 'EXTERNO' ? 'EXTERNO' : 'USER'
+        rol: usuario.rol === 'ADMIN' ? 'ADMIN' : usuario.rol === 'EXTERNO' ? 'EXTERNO' : 'USER',
+        acceso_externo: usuario.acceso_externo !== false && usuario.accesoExterno !== false
       })
     } else {
       setFormData(emptyForm)
@@ -39,7 +41,8 @@ const UsuarioModal = ({ usuario, onClose }) => {
         apellido: formData.apellido,
         dni: formData.dni,
         usuario: formData.usuario,
-        rol: formData.rol
+        rol: formData.rol,
+        acceso_externo: formData.acceso_externo
       }
       if (usuario) {
         if (formData.clave.trim()) {
@@ -66,8 +69,8 @@ const UsuarioModal = ({ usuario, onClose }) => {
   }
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    const { name, value, type, checked } = e.target
+    setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }))
   }
 
   return (
@@ -158,14 +161,34 @@ const UsuarioModal = ({ usuario, onClose }) => {
             >
               <option value="USER">USER — vendedor en el local</option>
               <option value="ADMIN">ADMIN — acceso completo</option>
-              <option value="EXTERNO">EXTERNO — solo Faltantes y Pedidos</option>
+              <option value="EXTERNO">EXTERNO — siempre sin Ventas</option>
             </select>
             {formData.rol === 'EXTERNO' && (
               <p className="mt-1 text-xs text-slate-500">
-                Este usuario solo puede entrar a Faltantes y Pedidos, desde el local o desde internet.
+                Sin Ventas también en el local. ADMIN y USER pueden usar el mismo login desde
+                internet: ahí Ventas se oculta sola.
               </p>
             )}
           </div>
+
+          <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 cursor-pointer">
+            <input
+              type="checkbox"
+              name="acceso_externo"
+              checked={Boolean(formData.acceso_externo)}
+              onChange={handleChange}
+              className="mt-1"
+            />
+            <span>
+              <span className="block text-sm font-medium text-gray-800">
+                Permitir ingreso desde internet
+              </span>
+              <span className="block text-xs text-slate-500 mt-0.5">
+                Si está marcado, este usuario puede entrar por el enlace de ngrok con el mismo
+                usuario y clave. Desde afuera no ve Ventas.
+              </span>
+            </span>
+          </label>
 
           <div className="flex justify-end space-x-3 pt-4 border-t">
             <button

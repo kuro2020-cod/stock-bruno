@@ -13,11 +13,13 @@ import {
 import { validarStockPromo, promoTieneItems } from '../utils/promocionVenta'
 import { Plus, Edit, Trash2, Tag, Filter, ShoppingCart, Search } from 'lucide-react'
 import PromocionModal from '../components/PromocionModal'
+import { esAccesoLimitado } from '../utils/acceso'
 
 const Promociones = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
   const esAdmin = user?.rol === 'ADMIN'
+  const sinVentas = esAccesoLimitado(user)
   const [promociones, setPromociones] = useState([])
   const [productos, setProductos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -135,7 +137,7 @@ const Promociones = () => {
         {textoFechasPromo(p) && <p className="text-xs opacity-75 mb-3">{textoFechasPromo(p)}</p>}
 
         <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-current/10">
-          {vigente && promoTieneItems(p) && (
+          {vigente && promoTieneItems(p) && !sinVentas && (
             <button
               type="button"
               disabled={sinStock}

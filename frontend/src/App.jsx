@@ -29,7 +29,7 @@ import MercadoPago from './pages/MercadoPago'
 import Pedidos from './pages/Pedidos'
 import Vencimientos from './pages/Vencimientos'
 import LoadingScreen from './components/ui/LoadingScreen'
-import { esAccesoLimitado } from './utils/acceso'
+import { esAccesoLimitado, rutaHome } from './utils/acceso'
 
 function AppRoutes() {
   const { user, loading } = useAuth()
@@ -48,20 +48,7 @@ function AppRoutes() {
   }
 
   const limitado = esAccesoLimitado(user)
-  const home = limitado ? '/faltantes' : user.rol === 'ADMIN' ? '/' : '/ventas'
-
-  if (limitado) {
-    return (
-      <Layout>
-        <Routes>
-          <Route path="/login" element={<Navigate to="/faltantes" replace />} />
-          <Route path="/faltantes" element={<Faltantes />} />
-          <Route path="/pedidos" element={<Pedidos />} />
-          <Route path="*" element={<Navigate to="/faltantes" replace />} />
-        </Routes>
-      </Layout>
-    )
-  }
+  const home = rutaHome(user)
 
   return (
     <Layout>
@@ -70,10 +57,13 @@ function AppRoutes() {
         <Route
           path="/"
           element={
-            user.rol === 'ADMIN' ? <Dashboard /> : <Navigate to="/ventas" replace />
+            user.rol === 'ADMIN' ? <Dashboard /> : <Navigate to={home} replace />
           }
         />
-        <Route path="/ventas" element={<Ventas />} />
+        <Route
+          path="/ventas"
+          element={limitado ? <Navigate to={home} replace /> : <Ventas />}
+        />
         <Route path="/promociones" element={<Promociones />} />
         <Route path="/carga-productos" element={<CargaProductos />} />
         <Route path="/pedidos" element={<Pedidos />} />

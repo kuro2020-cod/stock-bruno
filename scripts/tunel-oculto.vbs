@@ -1,9 +1,9 @@
-' Arranca el tunel fijo de ngrok en segundo plano.
-' Lo llama abrir-sistema.vbs cuando el servidor ya esta en el puerto 3001.
+' Arranca el tunel fijo de ngrok en segundo plano (sin ventana).
+' Lo llama abrir-sistema.vbs y servidor-oculto.vbs cuando el servidor ya esta en 3001.
 
 Option Explicit
 Dim fso, sh, scriptDir, exe, binDir, logFile, urlFile, cfgFile, zipFile
-Dim token, dominio, url
+Dim token, dominio, url, cmd
 
 Set fso = CreateObject("Scripting.FileSystemObject")
 Set sh = CreateObject("WScript.Shell")
@@ -52,7 +52,10 @@ End If
 
 Call GuardarUrl(urlFile, url)
 Call LogLine("Iniciando ngrok " & url)
-sh.Run """" & scriptDir & "\tunel-fondo.bat""", 0, False
+
+' cmd /c es necesario: un .bat oculto (Run style 0) a veces no arranca, sobre todo con espacios en la ruta.
+cmd = "cmd.exe /c call """ & scriptDir & "\tunel-fondo.bat"""
+sh.Run cmd, 0, False
 
 WScript.Quit 0
 
@@ -65,6 +68,9 @@ Sub LeerConfig(path, ByRef tok, ByRef dom)
   Set t = fso.OpenTextFile(path, 1)
   Do While Not t.AtEndOfStream
     line = Trim(t.ReadLine)
+    If Left(line, 3) = Chr(239) & Chr(187) & Chr(191) Then line = Mid(line, 4)
+    If Left(line, 1) = ChrW(&HFEFF) Then line = Mid(line, 2)
+    line = Trim(line)
     If line <> "" And Left(line, 1) <> "#" Then
       eq = InStr(line, "=")
       If eq > 0 Then
@@ -80,14 +86,14 @@ Sub LeerConfig(path, ByRef tok, ByRef dom)
 End Sub
 
 Function DescargarNgrok(zipPath, exePath)
-  Dim cmd, folder
+  Dim cmdDl, folder
   DescargarNgrok = False
   folder = fso.GetParentFolderName(exePath)
-  cmd = "powershell -NoProfile -Command ""try { " & _
+  cmdDl = "powershell -NoProfile -Command ""try { " & _
         "Invoke-WebRequest -Uri 'https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip' -OutFile '" & zipPath & "' -UseBasicParsing; " & _
         "Expand-Archive -Path '" & zipPath & "' -DestinationPath '" & folder & "' -Force; " & _
         "exit 0 } catch { exit 1 }"""
-  If sh.Run(cmd, 0, True) = 0 And fso.FileExists(exePath) Then DescargarNgrok = True
+  If sh.Run(cmdDl, 0, True) = 0 And fso.FileExists(exePath) Then DescargarNgrok = True
 End Function
 
 Sub LogLine(msg)
@@ -113,7 +119,7 @@ Function ProcesoCorriendo(nombre)
   ProcesoCorriendo = False
   On Error Resume Next
   Set exec = sh.Exec("cmd /c tasklist /FI ""IMAGENAME eq " & nombre & """ /NH")
-  WScript.Sleep 400
+  WScript.Sleep 500
   out = ""
   If Not exec.StdOut.AtEndOfStream Then out = exec.StdOut.ReadAll
   If InStr(1, out, nombre, vbTextCompare) > 0 Then ProcesoCorriendo = True

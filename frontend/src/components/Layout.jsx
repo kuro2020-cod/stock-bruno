@@ -51,6 +51,7 @@ const Layout = ({ children }) => {
   const [openGroups, setOpenGroups] = useState({})
 
   const visibleItem = (item) => {
+    if (item.hideIfLimitado && limitado) return false
     if (item.adminOnly) return isAdmin
     if (item.userOnly) return !isAdmin
     return true
@@ -64,21 +65,11 @@ const Layout = ({ children }) => {
     return location.pathname === path
   }
 
-  const menuSections = (
-    limitado
-      ? [
-          {
-            items: [
-              { path: '/faltantes', icon: ClipboardList, label: 'Faltantes' },
-              { path: '/pedidos', icon: ClipboardCheck, label: 'Pedidos' }
-            ]
-          }
-        ]
-      : [
+  const menuSections = [
     {
       items: [
         { path: '/', icon: LayoutDashboard, label: 'Dashboard', adminOnly: true },
-        { path: '/ventas', icon: ShoppingCart, label: 'Ventas', adminOnly: false }
+        { path: '/ventas', icon: ShoppingCart, label: 'Ventas', hideIfLimitado: true }
       ]
     },
     {
@@ -128,7 +119,6 @@ const Layout = ({ children }) => {
       children: [{ path: '/usuarios', icon: Users, label: 'Usuarios', adminOnly: true }]
     }
   ]
-  )
     .map((section) => {
       if (section.children) {
         return { ...section, children: section.children.filter(visibleItem) }
@@ -228,7 +218,7 @@ const Layout = ({ children }) => {
               <div className="min-w-0">
                 <h1 className="text-lg font-bold text-white leading-tight truncate">Control de Stock</h1>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  {limitado ? 'Solo Faltantes y Pedidos' : 'Gestión integral'}
+                  {limitado ? 'Acceso remoto · sin Ventas' : 'Gestión integral'}
                 </p>
               </div>
             </div>
@@ -262,7 +252,6 @@ const Layout = ({ children }) => {
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {!limitado && (
           <button
             type="button"
             disabled={cajaBloqueada}
@@ -272,7 +261,6 @@ const Layout = ({ children }) => {
             <ClipboardList size={18} className="shrink-0" />
             Arqueo parcial
           </button>
-          )}
           <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">Menú</p>
           {menuSections.map((section) => {
             const renderLink = (item) => {
@@ -561,7 +549,7 @@ const Layout = ({ children }) => {
             cajaBloqueada ? 'pointer-events-none select-none opacity-40' : ''
           }`}
         >
-          {!limitado && !cajaBloqueada && <AlertaVencimientos />}
+          {!cajaBloqueada && <AlertaVencimientos />}
           {children}
         </main>
       </div>

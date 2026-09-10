@@ -19,3 +19,10 @@ export function esAccesoLimitado(user) {
     esHostExterno()
   )
 }
+
+/** Inicio según rol. Desde afuera no hay módulo de Ventas. */
+export function rutaHome(user) {
+  const admin = String(user?.rol || '').toUpperCase() === 'ADMIN'
+  if (esAccesoLimitado(user)) return admin ? '/' : '/faltantes'
+  return admin ? '/' : '/ventas'
+}

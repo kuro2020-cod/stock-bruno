@@ -102,6 +102,9 @@ const Usuarios = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">DNI</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Internet
+                  </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                     Acciones
                   </th>
@@ -127,6 +130,9 @@ const Usuarios = () => {
                       >
                         {u.rol}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {u.acceso_externo === false ? 'No' : 'Sí'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                       <button

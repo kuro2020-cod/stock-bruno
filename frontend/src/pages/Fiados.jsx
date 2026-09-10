@@ -13,6 +13,8 @@ import {
 import { fiadosAPI } from '../services/api'
 import { lineasCarritoDesdeFiados } from '../utils/fiadoCarrito'
 import { fmtCantidadStock } from '../utils/unidades'
+import { useAuth } from '../context/AuthContext'
+import { esAccesoLimitado } from '../utils/acceso'
 
 const METODO_COBRO_LABEL = {
   efectivo: 'Efectivo',
@@ -50,6 +52,8 @@ const fmtFechaHora = (fecha) => {
 
 const Fiados = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const sinVentas = esAccesoLimitado(user)
   const [resumen, setResumen] = useState([])
   const [movimientos, setMovimientos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -142,8 +146,10 @@ const Fiados = () => {
           Fiados
         </h2>
         <p className="text-sm text-gray-600 dark:text-slate-400 max-w-2xl">
-          Personas con saldo pendiente. Con <strong>Cobrar en ventas</strong> se cargan los productos en el
-          carrito para cobrar como una venta normal y sumar más productos en el mismo ticket.
+          Personas con saldo pendiente
+          {sinVentas
+            ? '.'
+            : '. Con Cobrar en ventas se cargan los productos en el carrito para cobrar como una venta normal y sumar más productos en el mismo ticket.'}
         </p>
       </header>
 
@@ -224,6 +230,7 @@ const Fiados = () => {
                     <p className="text-lg font-bold text-amber-900 dark:text-amber-200 tabular-nums">
                       {fmtMoney(r.total_debe)}
                     </p>
+                    {!sinVentas && (
                     <button
                       type="button"
                       onClick={() => cobrarCliente(r)}
@@ -232,6 +239,7 @@ const Fiados = () => {
                       <ShoppingCart size={14} />
                       Cobrar en ventas
                     </button>
+                    )}
                   </div>
                 </div>
                 {abierto && (
@@ -329,6 +337,7 @@ const Fiados = () => {
                                 </p>
                               )}
                             </div>
+                            {!sinVentas && (
                             <button
                               type="button"
                               onClick={() => cobrarUno(m)}
@@ -337,6 +346,7 @@ const Fiados = () => {
                               <ShoppingCart size={14} />
                               Cobrar en ventas
                             </button>
+                            )}
                           </li>
                         ))}
                       </ul>
