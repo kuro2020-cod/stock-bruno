@@ -77,6 +77,18 @@ const Productos = () => {
   }, [])
 
   useEffect(() => {
+    const recargar = () => {
+      if (document.visibilityState === 'visible') loadProductos()
+    }
+    document.addEventListener('visibilitychange', recargar)
+    window.addEventListener('focus', recargar)
+    return () => {
+      document.removeEventListener('visibilitychange', recargar)
+      window.removeEventListener('focus', recargar)
+    }
+  }, [])
+
+  useEffect(() => {
     filtrarProductos()
   }, [searchTerm, filterCategoria, filterStock, productos, sortKey, sortDir])
 

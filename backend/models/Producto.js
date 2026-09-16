@@ -189,11 +189,26 @@ export class Producto {
       throw new Error('Los precios no pueden ser negativos');
     }
 
-    const sa = noControla ? 0 : Number(stock_actual);
-    const sm = noControla ? 0 : Number(stock_minimo);
+    const tocarStock = Object.prototype.hasOwnProperty.call(productoData, 'stock_actual');
+    const tocarMinimo = Object.prototype.hasOwnProperty.call(productoData, 'stock_minimo');
+    const sa = noControla
+      ? 0
+      : tocarStock
+        ? Number(stock_actual)
+        : Number(productoExistente.stock_actual);
+    const sm = noControla
+      ? 0
+      : tocarMinimo
+        ? Number(stock_minimo)
+        : Number(productoExistente.stock_minimo);
     if (Number.isNaN(sa) || Number.isNaN(sm) || sa < 0 || sm < 0) {
       throw new Error('El stock no puede ser negativo');
     }
+
+    const tocarCategoria = Object.prototype.hasOwnProperty.call(productoData, 'categoria_id');
+    const catId = tocarCategoria
+      ? (categoria_id === '' || categoria_id == null ? null : categoria_id)
+      : productoExistente.categoria_id;
 
     await db.run(`
       UPDATE productos
@@ -203,7 +218,7 @@ export class Producto {
           no_verifica_vencimiento = ?, fecha_vencimiento = ?,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `, [codigo || null, nombre.trim(), descripcion?.trim() || null, categoria_id || null, precio_compra || 0, precio_venta || 0, sa, sm, unidad_medida || 'unidad', noControla, noVerifica, fechaVenc, id]);
+    `, [codigo || null, nombre.trim(), descripcion?.trim() || null, catId, precio_compra || 0, precio_venta || 0, sa, sm, unidad_medida || 'unidad', noControla, noVerifica, fechaVenc, id]);
 
     return this.getById(id);
   }

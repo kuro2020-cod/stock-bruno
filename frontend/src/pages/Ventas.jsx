@@ -462,14 +462,18 @@ const Ventas = () => {
 
   /** Recargar catálogo si la pestaña estuvo abierta mucho tiempo (evita nombres viejos en memoria). */
   useEffect(() => {
-    const onVisible = () => {
+    const recargar = () => {
       if (document.visibilityState === 'visible') {
         loadProductos()
         loadPromociones()
       }
     }
-    document.addEventListener('visibilitychange', onVisible)
-    return () => document.removeEventListener('visibilitychange', onVisible)
+    document.addEventListener('visibilitychange', recargar)
+    window.addEventListener('focus', recargar)
+    return () => {
+      document.removeEventListener('visibilitychange', recargar)
+      window.removeEventListener('focus', recargar)
+    }
   }, [loadProductos, loadPromociones])
 
   /** Sincronizar nombres/códigos del carrito cuando se actualiza el catálogo en memoria. */

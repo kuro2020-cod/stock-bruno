@@ -130,27 +130,40 @@ export class Movimiento {
         ? String(motivo).trim().toUpperCase()
         : motivo || null;
 
-    // Crear movimiento (precio_unitario solo aplica a salidas / ventas)
-    const result = await db.run(`
-      INSERT INTO movimientos (producto_id, tipo, cantidad, motivo, usuario, precio_unitario, metodo_pago)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [producto_id, tipo, cantidad, motivoGuardado, usuario || 'Sistema', precioGuardado, metodoPagoNormalizado]);
-
-    // Actualizar stock del producto (no aplica a elaborados sin control de stock)
+    let cantidadAjuste = 0;
     if (!sinStock) {
-      let cantidadAjuste;
       if (tipo === 'entrada') {
         cantidadAjuste = cantidad;
       } else if (tipo === 'salida' || tipo === 'baja') {
         cantidadAjuste = -cantidad;
       } else {
-        // ajuste: cantidad = stock final deseado
         cantidadAjuste = round4(cantidad - Number(producto.stock_actual));
       }
-      await Producto.updateStock(producto_id, cantidadAjuste);
     }
 
-    return this.getById(result.lastID);
+    // Movimiento + stock en la misma transacción para que no quede uno sin el otro.
+    const lastID = await db.transaction(async ({ run }) => {
+      const result = await run(
+        `
+        INSERT INTO movimientos (producto_id, tipo, cantidad, motivo, usuario, precio_unitario, metodo_pago)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `,
+        [producto_id, tipo, cantidad, motivoGuardado, usuario || 'Sistema', precioGuardado, metodoPagoNormalizado]
+      );
+      if (!sinStock && cantidadAjuste !== 0) {
+        await run(
+          `
+          UPDATE productos
+          SET stock_actual = stock_actual + ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `,
+          [cantidadAjuste, producto_id]
+        );
+      }
+      return result.lastID;
+    });
+
+    return this.getById(lastID);
   }
 
   static async getById(id) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { productosAPI, categoriasAPI, movimientosAPI } from '../services/api'
 import { X } from 'lucide-react'
 import {
@@ -84,6 +84,8 @@ const ProductoModal = ({
   /** El código ya existe en BD: el nombre se toma y bloquea para no desfasar con el código */
   const [codigoExisteEnBd, setCodigoExisteEnBd] = useState(false)
   const [productoExistenteId, setProductoExistenteId] = useState(null)
+  const camposTocadosRef = useRef(new Set())
+  const codigoConsultaRef = useRef('')
 
   const reiniciarFormularioCarga = useCallback(async () => {
     if (!cargaProductos || producto) return
@@ -100,6 +102,7 @@ const ProductoModal = ({
     setStockEnBaseDatos(0)
     setCodigoExisteEnBd(false)
     setProductoExistenteId(null)
+    camposTocadosRef.current = new Set()
   }, [cargaProductos, producto, codigoInicial])
 
   useEffect(() => {
@@ -147,6 +150,10 @@ const ProductoModal = ({
   useEffect(() => {
     if (!cargaProductos || producto) return
     const c = formData.codigo?.trim()
+    if (c !== codigoConsultaRef.current) {
+      camposTocadosRef.current = new Set()
+      codigoConsultaRef.current = c || ''
+    }
     if (!c) {
       setStockEnBaseDatos(0)
       setCodigoExisteEnBd(false)
@@ -167,21 +174,31 @@ const ProductoModal = ({
         setProductoExistenteId(data.id)
         setFormData((prev) => {
           if (String(prev.codigo ?? '').trim() !== codigoConsultado) return prev
+          const tocados = camposTocadosRef.current
+          const keep = (campo, valorBd) => (tocados.has(campo) ? prev[campo] : valorBd)
           return {
           ...prev,
-          nombre: data.nombre || '',
-          descripcion: data.descripcion || '',
-          categoria_id: data.categoria_id != null && data.categoria_id !== '' ? String(data.categoria_id) : '',
-          precio_compra: precioParaForm(data.precio_compra),
-          precio_venta: precioParaForm(data.precio_venta),
-          unidad_medida: data.unidad_medida || 'unidad',
-          no_controla_stock: productoNoControlaStock(data),
-          no_verifica_vencimiento: Boolean(data.no_verifica_vencimiento) || productoNoVerificaVencimiento(data),
-          fecha_vencimiento: fechaISOParaInput(data.fecha_vencimiento),
-          ...(productoNoControlaStock(data)
+          nombre: keep('nombre', data.nombre || ''),
+          descripcion: keep('descripcion', data.descripcion || ''),
+          categoria_id: keep(
+            'categoria_id',
+            data.categoria_id != null && data.categoria_id !== '' ? String(data.categoria_id) : ''
+          ),
+          precio_compra: keep('precio_compra', precioParaForm(data.precio_compra)),
+          precio_venta: keep('precio_venta', precioParaForm(data.precio_venta)),
+          unidad_medida: keep('unidad_medida', data.unidad_medida || 'unidad'),
+          no_controla_stock: keep('no_controla_stock', productoNoControlaStock(data)),
+          no_verifica_vencimiento: keep(
+            'no_verifica_vencimiento',
+            Boolean(data.no_verifica_vencimiento) || productoNoVerificaVencimiento(data)
+          ),
+          fecha_vencimiento: keep('fecha_vencimiento', fechaISOParaInput(data.fecha_vencimiento)),
+          ...(productoNoControlaStock(data) && !tocados.has('cantidad_ingreso')
             ? { stock_actual: 0, stock_minimo: 0, cantidad_ingreso: '', fecha_vencimiento: '' }
             : {}),
-          ...(productoNoVerificaVencimiento(data) ? { fecha_vencimiento: '' } : {})
+          ...(productoNoVerificaVencimiento(data) && !tocados.has('fecha_vencimiento')
+            ? { fecha_vencimiento: '' }
+            : {})
         }
         })
       } catch (e) {
@@ -228,39 +245,48 @@ const ProductoModal = ({
     try {
       const precioCompra = precioANumero(formData.precio_compra)
       const precioVenta = precioANumero(formData.precio_venta)
+      const noControla = Boolean(formData.no_controla_stock)
+      const noVerifica = Boolean(formData.no_verifica_vencimiento)
+      const fechaVenc = noControla || noVerifica ? null : fechaISOParaInput(formData.fecha_vencimiento) || null
+      const catId =
+        formData.categoria_id === '' || formData.categoria_id == null
+          ? null
+          : Number(formData.categoria_id)
 
-      if (producto || (cargaProductos && productoExistenteId)) {
-        const idEditar = producto?.id || productoExistenteId
-        const noControla = Boolean(formData.no_controla_stock)
-        const noVerifica = Boolean(formData.no_verifica_vencimiento)
-        if (cargaProductos && !producto && productoExistenteId) {
+      if (cargaProductos && !producto) {
+        const codigoTrim = formData.codigo?.trim()
+        let existente = null
+        if (codigoTrim) {
+          try {
+            const { data } = await productosAPI.getByCodigo(codigoTrim)
+            existente = data
+          } catch (e) {
+            if (e.response?.status !== 404) throw e
+          }
+        }
+        if (existente) {
           const qty = cantidadIngresoANumero(formData.cantidad_ingreso)
           if (qty > 0 && !noControla) {
             await movimientosAPI.create({
-              producto_id: idEditar,
+              producto_id: existente.id,
               tipo: 'entrada',
               cantidad: qty,
               motivo: 'Carga manual',
               usuario: 'Usuario'
             })
           }
-          const { data: fresh } = await productosAPI.getById(idEditar)
-          await productosAPI.update(idEditar, {
-            codigo: fresh.codigo,
-            nombre: (fresh.nombre || formData.nombre || '').trim(),
+          await productosAPI.update(existente.id, {
+            codigo: existente.codigo,
+            nombre: (formData.nombre || existente.nombre || '').trim(),
             descripcion: formData.descripcion?.trim() || null,
-            categoria_id:
-              formData.categoria_id === '' || formData.categoria_id == null
-                ? null
-                : Number(formData.categoria_id),
+            categoria_id: catId,
             precio_compra: precioCompra,
             precio_venta: precioVenta,
-            stock_actual: Number(fresh.stock_actual) || 0,
-            stock_minimo: Number(fresh.stock_minimo) || 0,
+            stock_minimo: Number(existente.stock_minimo) || 0,
             unidad_medida: formData.unidad_medida || 'unidad',
             no_controla_stock: noControla,
             no_verifica_vencimiento: noVerifica,
-            fecha_vencimiento: noControla || noVerifica ? null : fechaISOParaInput(formData.fecha_vencimiento) || null
+            fecha_vencimiento: fechaVenc
           })
           if (inline) await reiniciarFormularioCarga()
           onIngresoAutomatico?.()
@@ -268,6 +294,27 @@ const ProductoModal = ({
           onClose()
           return
         }
+
+        const { cantidad_ingreso, ...rest } = formData
+        await productosAPI.create({
+          ...rest,
+          precio_compra: precioCompra,
+          precio_venta: precioVenta,
+          no_controla_stock: noControla,
+          no_verifica_vencimiento: noVerifica,
+          stock_actual: noControla ? 0 : cantidadIngresoANumero(cantidad_ingreso),
+          stock_minimo: 0,
+          categoria_id: catId,
+          fecha_vencimiento: fechaVenc
+        })
+        if (inline) await reiniciarFormularioCarga()
+        else onSaved?.()
+        onClose()
+        return
+      }
+
+      if (producto || productoExistenteId) {
+        const idEditar = producto?.id || productoExistenteId
         await productosAPI.update(idEditar, {
           ...formData,
           precio_compra: precioCompra,
@@ -276,46 +323,29 @@ const ProductoModal = ({
           no_verifica_vencimiento: noVerifica,
           stock_actual: noControla ? 0 : Number(formData.stock_actual) || 0,
           stock_minimo: noControla ? 0 : Number(formData.stock_minimo) || 0,
-          fecha_vencimiento: noControla || noVerifica ? null : fechaISOParaInput(formData.fecha_vencimiento) || null
+          categoria_id: catId,
+          fecha_vencimiento: fechaVenc
         })
         onSaved?.()
+        onClose()
+        return
+      }
+
+      await productosAPI.create({
+        ...formData,
+        precio_compra: precioCompra,
+        precio_venta: precioVenta,
+        no_controla_stock: noControla,
+        no_verifica_vencimiento: noVerifica,
+        stock_actual: noControla ? 0 : Number(formData.stock_actual) || 0,
+        stock_minimo: noControla ? 0 : Number(formData.stock_minimo) || 0,
+        categoria_id: catId,
+        fecha_vencimiento: fechaVenc
+      })
+      if (inline) {
+        setFormData(emptyForm(codigoInicial))
       } else {
-        const { cantidad_ingreso, ...rest } = formData
-        const noControla = Boolean(formData.no_controla_stock)
-        const noVerifica = Boolean(formData.no_verifica_vencimiento)
-        const fechaVenc = noControla || noVerifica ? null : fechaISOParaInput(formData.fecha_vencimiento) || null
-        const payload =
-          cargaProductos
-            ? {
-                ...rest,
-                precio_compra: precioCompra,
-                precio_venta: precioVenta,
-                no_controla_stock: noControla,
-                no_verifica_vencimiento: noVerifica,
-                stock_actual: noControla ? 0 : cantidadIngresoANumero(cantidad_ingreso),
-                stock_minimo: 0,
-                fecha_vencimiento: fechaVenc
-              }
-            : {
-                ...formData,
-                precio_compra: precioCompra,
-                precio_venta: precioVenta,
-                no_controla_stock: noControla,
-                no_verifica_vencimiento: noVerifica,
-                stock_actual: noControla ? 0 : Number(formData.stock_actual) || 0,
-                stock_minimo: noControla ? 0 : Number(formData.stock_minimo) || 0,
-                fecha_vencimiento: fechaVenc
-              }
-        await productosAPI.create(payload)
-        if (inline) {
-          if (cargaProductos) {
-            await reiniciarFormularioCarga()
-          } else {
-            setFormData(emptyForm(codigoInicial))
-          }
-        } else {
-          onSaved?.()
-        }
+        onSaved?.()
       }
       onClose()
     } catch (error) {
@@ -347,10 +377,9 @@ const ProductoModal = ({
               }
             }
             try {
-              const { data: fresh } = await productosAPI.getById(data.id)
               await productosAPI.update(data.id, {
-                codigo: fresh.codigo,
-                nombre: (fresh.nombre || '').trim(),
+                codigo: data.codigo,
+                nombre: (formData.nombre || data.nombre || '').trim(),
                 descripcion: formData.descripcion?.trim() || null,
                 categoria_id:
                   formData.categoria_id === '' || formData.categoria_id == null
@@ -358,13 +387,12 @@ const ProductoModal = ({
                     : Number(formData.categoria_id),
                 precio_compra: precioANumero(formData.precio_compra),
                 precio_venta: precioANumero(formData.precio_venta),
-                stock_actual: Number(fresh.stock_actual) || 0,
-                stock_minimo: Number(fresh.stock_minimo) || 0,
+                stock_minimo: Number(data.stock_minimo) || 0,
                 unidad_medida: formData.unidad_medida || 'unidad',
-                no_controla_stock: Boolean(fresh.no_controla_stock),
+                no_controla_stock: Boolean(data.no_controla_stock),
                 no_verifica_vencimiento: Boolean(formData.no_verifica_vencimiento),
                 fecha_vencimiento:
-                  Boolean(fresh.no_controla_stock) || Boolean(formData.no_verifica_vencimiento)
+                  Boolean(data.no_controla_stock) || Boolean(formData.no_verifica_vencimiento)
                     ? null
                     : fechaISOParaInput(formData.fecha_vencimiento) || null
               })
@@ -411,6 +439,9 @@ const ProductoModal = ({
 
   const handleChange = (e) => {
     const { name, value, checked } = e.target
+    if (name && name !== 'codigo') {
+      camposTocadosRef.current.add(name)
+    }
     if (name === 'no_controla_stock') {
       setFormData((prev) => ({
         ...prev,

@@ -8,6 +8,9 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
+  config.headers = config.headers || {}
+  config.headers['Cache-Control'] = 'no-cache'
+  config.headers.Pragma = 'no-cache'
   const raw = localStorage.getItem('auth')
   if (raw) {
     try {
@@ -18,6 +21,10 @@ api.interceptors.request.use((config) => {
     } catch {
       /* ignore */
     }
+  }
+  const method = String(config.method || 'get').toLowerCase()
+  if (method === 'get') {
+    config.params = { ...(config.params || {}), _ts: Date.now() }
   }
   return config
 })
