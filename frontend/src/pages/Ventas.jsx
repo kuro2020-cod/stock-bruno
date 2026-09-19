@@ -1803,14 +1803,15 @@ const Ventas = () => {
   }
 
   const campoNombreFiado = (inputId) => (
-    <div className="relative">
-      <label htmlFor={inputId} className="text-xs font-medium text-amber-900 block">
+    <div>
+      <label htmlFor={inputId} className="text-sm font-medium text-amber-900 dark:text-amber-100 block">
         Nombre de la persona
       </label>
       <input
         id={inputId}
         type="text"
         autoComplete="off"
+        autoFocus
         placeholder="Buscar o escribir nombre…"
         value={clienteFiado}
         onChange={(e) => {
@@ -1827,25 +1828,25 @@ const Ventas = () => {
           liberarEdicionManual()
         }}
         onKeyDown={onKeyDownClienteFiado}
-        className="w-full mt-1 px-3 py-2 border border-amber-300 rounded-lg text-sm bg-white"
+        className="w-full mt-1 px-3 py-3 border border-amber-300 dark:border-amber-700 rounded-lg text-base bg-white dark:bg-slate-900 dark:text-slate-100"
       />
       {mostrarSugerenciasFiado && sugerenciasFiado.length > 0 && (
-        <ul className="absolute z-30 left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-lg border border-amber-200 bg-white shadow-lg">
+        <ul className="mt-2 max-h-64 sm:max-h-80 overflow-y-auto rounded-lg border border-amber-200 dark:border-amber-800 bg-white dark:bg-slate-900 shadow-lg">
           {sugerenciasFiado.map((c, idx) => (
             <li key={c.cliente_nombre}>
               <button
                 type="button"
-                className={`w-full text-left px-3 py-2 text-sm hover:bg-amber-50 ${
-                  idx === sugerenciaFiadoIdx ? 'bg-amber-50' : ''
+                className={`w-full text-left px-3 py-2.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-950/40 ${
+                  idx === sugerenciaFiadoIdx ? 'bg-amber-50 dark:bg-amber-950/40' : ''
                 }`}
                 onMouseDown={(e) => {
                   e.preventDefault()
                   elegirClienteFiado(c)
                 }}
               >
-                <span className="font-medium text-gray-900">{c.cliente_nombre}</span>
+                <span className="font-medium text-gray-900 dark:text-slate-50">{c.cliente_nombre}</span>
                 {Number(c.total_debe) > 0 ? (
-                  <span className="block text-[11px] text-amber-800 tabular-nums">
+                  <span className="block text-[11px] text-amber-800 dark:text-amber-200 tabular-nums">
                     Debe {fmtMoney(c.total_debe)} · {c.compras_pendientes || 0} compra(s)
                   </span>
                 ) : (
@@ -2858,7 +2859,7 @@ const Ventas = () => {
               El carrito está vacío. Busque o escanee productos para agregarlos.
             </div>
           ) : (
-            <div className="flex flex-col lg:flex-row lg:items-stretch">
+            <div className="flex flex-col-reverse lg:flex-row lg:items-stretch">
               <div className="lg:w-[48%] xl:w-[45%] min-w-0 divide-y divide-gray-100 max-h-[min(70vh,640px)] overflow-y-auto">
                 {cart.map((line) => {
                   const lineId = idLineaCarrito(line)
@@ -3094,7 +3095,7 @@ const Ventas = () => {
                 })}
                 </div>
 
-                <aside className="border-t lg:border-t-0 lg:border-l border-gray-200 bg-gray-50 p-5 sm:p-6 w-full lg:w-[52%] xl:w-[55%] flex flex-col gap-4">
+                <aside className="border-b lg:border-b-0 lg:border-l border-gray-200 bg-gray-50 p-5 sm:p-6 w-full lg:w-[52%] xl:w-[55%] flex flex-col gap-4">
                   <div className="text-center py-2">
                     <p className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-slate-400">
                       Total a pagar
@@ -3109,7 +3110,7 @@ const Ventas = () => {
                       {fmtMoney(total)}
                     </p>
                   </div>
-                  <div className="mt-auto grid grid-cols-1 min-[420px]:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-2">
                     <button
                       type="button"
                       disabled={cart.length === 0 || submitting}

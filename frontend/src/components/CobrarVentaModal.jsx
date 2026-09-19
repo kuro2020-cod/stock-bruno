@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { X, Banknote, Smartphone, CreditCard, BookUser, CheckCircle, PackageMinus, Bike } from 'lucide-react'
-import IndicadorSaldoPago from './IndicadorSaldoPago'
 import PedidosYaPagoModal from './PedidosYaPagoModal'
+import DetallePagoModal, { metodosNecesitanDetalle } from './DetallePagoModal'
 import { fmtMoney } from '../utils/promociones'
 import {
   parseMontoPago,
@@ -50,6 +50,7 @@ export default function CobrarVentaModal({
   const [nombreDueno, setNombreDueno] = useState('')
   const [error, setError] = useState('')
   const [showPedidosYaModal, setShowPedidosYaModal] = useState(false)
+  const [showDetallePago, setShowDetallePago] = useState(false)
   const [pedidosYaConfig, setPedidosYaConfig] = useState(pedidosYaVacio)
 
   const pagoCombinado = metodosSeleccionados.length >= 2
@@ -63,6 +64,7 @@ export default function CobrarVentaModal({
     setNombreDueno('')
     setError('')
     setShowPedidosYaModal(false)
+    setShowDetallePago(false)
     setPedidosYaConfig(pedidosYaVacio())
   }, [open])
 
@@ -153,6 +155,7 @@ export default function CobrarVentaModal({
   const toggleMetodo = (key) => {
     setError('')
     setMetodosSeleccionados((prev) => {
+      let next
       if (prev.includes(key)) {
         setMontosPago((m) => ({ ...m, [key]: '' }))
         if (key === 'efectivo') setMontoRecibidoEfectivo('')
@@ -160,9 +163,8 @@ export default function CobrarVentaModal({
           setShowPedidosYaModal(false)
           setPedidosYaConfig(pedidosYaVacio())
         }
-        return prev.filter((k) => k !== key)
-      }
-      if (
+        next = prev.filter((k) => k !== key)
+      } else if (
         esMetodoExclusivo(key) ||
         prev.includes('retiro') ||
         prev.includes('pedidos_ya') ||
@@ -176,12 +178,20 @@ export default function CobrarVentaModal({
           setShowPedidosYaModal(false)
           setPedidosYaConfig(pedidosYaVacio())
         }
-        return [key]
+        next = [key]
+      } else {
+        if (key === 'pedidos_ya') {
+          setShowPedidosYaModal(true)
+        }
+        next = [...prev, key]
       }
-      if (key === 'pedidos_ya') {
-        setShowPedidosYaModal(true)
+
+      if (key !== 'pedidos_ya' && metodosNecesitanDetalle(next, esDevolucionEnvase)) {
+        setShowDetallePago(true)
+      } else if (!metodosNecesitanDetalle(next, esDevolucionEnvase)) {
+        setShowDetallePago(false)
       }
-      return [...prev, key]
+      return next
     })
   }
 
@@ -232,6 +242,18 @@ export default function CobrarVentaModal({
       metodosSeleccionados: medios,
       canalPago: 'pedidos_ya'
     })
+  }
+
+  const intentarConfirmar = () => {
+    if (metodoUnico === 'pedidos_ya' && !pedidosYaListo) {
+      setShowPedidosYaModal(true)
+      return
+    }
+    if (metodosNecesitanDetalle(metodosSeleccionados, esDevolucionEnvase) && confirmarDeshabilitado) {
+      setShowDetallePago(true)
+      return
+    }
+    confirmar()
   }
 
   const confirmar = () => {
@@ -391,59 +413,24 @@ export default function CobrarVentaModal({
             </div>
           </div>
 
-          {pagoCombinado && (
-            <div className="space-y-3 rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800/60 p-4 sm:p-5">
-              <p className="text-sm text-gray-500 dark:text-slate-400 leading-snug">
-                {metodosSeleccionados.includes('fiado')
-                  ? 'El fiado se completa solo con el total y se va restando cuando cargás otro medio.'
-                  : 'Distribuí el total entre los métodos elegidos.'}
-                {metodosSeleccionados.includes('efectivo') &&
-                  !metodosSeleccionados.includes('fiado') &&
-                  metodosSeleccionados.length >= 2 && (
-                  <span>
-                    {' '}
-                    Si el efectivo ingresado es de más, el excedente se mostrará como vuelto.
-                  </span>
-                )}
+          {metodosNecesitanDetalle(metodosSeleccionados, esDevolucionEnvase) && (
+            <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <p className="text-sm text-emerald-950 dark:text-emerald-100 flex-1">
+                {pagoCombinado
+                  ? 'Completá los importes y, si hay fiado, el nombre de la persona.'
+                  : metodoUnico === 'fiado'
+                    ? 'Indicá el nombre de la persona que se fía.'
+                    : metodoUnico === 'retiro'
+                      ? 'Indicá el nombre del dueño.'
+                      : 'Indicá con cuánto paga en efectivo.'}
               </p>
-              {metodosSeleccionados.map((key) => {
-                const label = METODOS.find((m) => m.key === key)?.label || key
-                const esFiadoAuto = key === 'fiado'
-                return (
-                  <div key={key} className="flex items-center gap-2">
-                    <label className="text-sm text-gray-600 dark:text-slate-300 w-[7.5rem] shrink-0 font-medium">
-                      {esFiadoAuto ? 'Fiado (resto)' : label}
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      inputMode="decimal"
-                      placeholder="0"
-                      value={montosPago[key]}
-                      readOnly={esFiadoAuto}
-                      onChange={(e) => {
-                        if (esFiadoAuto) return
-                        setMontosPago((prev) => ({ ...prev, [key]: e.target.value }))
-                      }}
-                      className={`flex-1 min-w-0 px-3 py-2.5 border rounded-lg text-base dark:text-slate-100 ${
-                        esFiadoAuto
-                          ? 'border-amber-300 bg-amber-50 dark:border-amber-600 dark:bg-amber-950/40 cursor-default'
-                          : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900'
-                      }`}
-                    />
-                  </div>
-                )
-              })}
-              {montoFiadoCombinado > 0 && renderCampoFiado?.('cliente-fiado-modal')}
-              {pagoCombinado && (
-                <IndicadorSaldoPago
-                  variant={indicadorCombinado.variant}
-                  titulo={indicadorCombinado.titulo}
-                  monto={indicadorCombinado.monto}
-                  detalle={indicadorCombinado.detalle}
-                />
-              )}
+              <button
+                type="button"
+                onClick={() => setShowDetallePago(true)}
+                className="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shrink-0"
+              >
+                Cargar datos
+              </button>
             </div>
           )}
 
@@ -492,112 +479,7 @@ export default function CobrarVentaModal({
             </div>
           )}
 
-          {metodoUnico === 'retiro' && (
-            <div className="space-y-3 rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-4 sm:p-5">
-              <p className="text-sm text-amber-950 dark:text-amber-100">
-                Retiro de mercadería: descuenta stock como «RETIRO DUEÑO». No suma a ventas ni a caja.
-              </p>
-              <div>
-                <label htmlFor="nombre-dueno-retiro" className="text-sm font-medium text-gray-700 dark:text-slate-200 block mb-1">
-                  Nombre del dueño
-                </label>
-                <input
-                  id="nombre-dueno-retiro"
-                  type="text"
-                  autoComplete="off"
-                  autoFocus
-                  value={nombreDueno}
-                  onChange={(e) => setNombreDueno(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key !== 'Enter') return
-                    e.preventDefault()
-                    if (submitting || !String(nombreDueno).trim()) return
-                    confirmar()
-                  }}
-                  placeholder="Nombre del dueño"
-                  className="w-full px-3 py-2.5 border border-amber-300 dark:border-amber-700 rounded-lg text-base bg-white dark:bg-slate-900 dark:text-slate-100"
-                />
-              </div>
-            </div>
-          )}
-
-          {metodoUnico === 'fiado' && (
-            <div className="space-y-3 rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-4 sm:p-5">
-              <p className="text-sm text-amber-950 dark:text-amber-100">
-                Todo el carrito queda en fiado:{' '}
-                <strong className="tabular-nums">{fmtMoney(total)}</strong>
-              </p>
-              {renderCampoFiado?.('cliente-fiado-modal-unico')}
-            </div>
-          )}
-
-          {metodoUnico === 'efectivo' && !pagoCombinado && (
-            <div className="space-y-3 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800/60 p-4 sm:p-5">
-              {esDevolucionEnvase ? (
-                <p className="text-sm font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
-                  A devolver al cliente: {fmtMoney(Math.abs(total))}
-                </p>
-              ) : (
-                <>
-                  <label
-                    htmlFor="monto-recibido-modal"
-                    className="text-sm font-medium text-gray-600 dark:text-slate-300 block"
-                  >
-                    Monto con el que paga
-                  </label>
-                  <input
-                    id="monto-recibido-modal"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    inputMode="decimal"
-                    placeholder="Ej. 2000"
-                    value={montoRecibidoEfectivo}
-                    onChange={(e) => setMontoRecibidoEfectivo(e.target.value)}
-                    className="w-full px-3 py-3 border border-gray-300 dark:border-slate-600 rounded-lg text-base bg-white dark:bg-slate-900 dark:text-slate-100"
-                  />
-                  {String(montoRecibidoEfectivo).trim() !== '' && (
-                    <IndicadorSaldoPago
-                      variant={
-                        vueltoEfectivo != null
-                          ? vueltoEfectivo <= 0.001
-                            ? 'exacto'
-                            : 'vuelto'
-                          : 'falta'
-                      }
-                      titulo={
-                        vueltoEfectivo != null
-                          ? vueltoEfectivo <= 0.001
-                            ? 'Pago exacto'
-                            : 'Vuelto'
-                          : 'Resta pagar'
-                      }
-                      monto={
-                        vueltoEfectivo != null
-                          ? vueltoEfectivo <= 0.001
-                            ? fmtMoney(0)
-                            : fmtMoney(vueltoEfectivo)
-                          : !Number.isNaN(montoRecibidoNum)
-                            ? fmtMoney(Math.max(0, total - montoRecibidoNum))
-                            : null
-                      }
-                      detalle={
-                        vueltoEfectivo != null
-                          ? vueltoEfectivo <= 0.001
-                            ? 'Sin vuelto'
-                            : `Total venta ${fmtMoney(total)}`
-                          : Number.isNaN(montoRecibidoNum)
-                            ? 'Ingresá un monto válido'
-                            : `Total venta ${fmtMoney(total)}`
-                      }
-                    />
-                  )}
-                </>
-              )}
-            </div>
-          )}
-
-          {error && (
+          {error && !showDetallePago && (
             <p className="text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2">
               {error}
             </p>
@@ -615,8 +497,8 @@ export default function CobrarVentaModal({
           </button>
           <button
             type="button"
-            onClick={confirmar}
-            disabled={confirmarDeshabilitado}
+            onClick={intentarConfirmar}
+            disabled={submitting || metodosSeleccionados.length === 0}
             className={`flex-1 inline-flex items-center justify-center gap-2 px-4 py-3.5 sm:py-4 rounded-xl text-white font-semibold text-base disabled:opacity-50 ${
               metodoUnico === 'retiro'
                 ? 'bg-amber-600 hover:bg-amber-700'
@@ -631,6 +513,34 @@ export default function CobrarVentaModal({
         </div>
       </div>
     </div>
+
+    <DetallePagoModal
+      open={showDetallePago}
+      total={total}
+      esDevolucionEnvase={esDevolucionEnvase}
+      submitting={submitting}
+      metodosSeleccionados={metodosSeleccionados}
+      metodoUnico={metodoUnico}
+      pagoCombinado={pagoCombinado}
+      montosPago={montosPago}
+      setMontosPago={setMontosPago}
+      montoRecibidoEfectivo={montoRecibidoEfectivo}
+      setMontoRecibidoEfectivo={setMontoRecibidoEfectivo}
+      nombreDueno={nombreDueno}
+      setNombreDueno={setNombreDueno}
+      montoRecibidoNum={montoRecibidoNum}
+      vueltoEfectivo={vueltoEfectivo}
+      indicadorCombinado={indicadorCombinado}
+      montoFiadoCombinado={montoFiadoCombinado}
+      renderCampoFiado={renderCampoFiado}
+      error={error}
+      confirmarDeshabilitado={confirmarDeshabilitado}
+      onClose={() => {
+        if (submitting) return
+        setShowDetallePago(false)
+      }}
+      onConfirm={confirmar}
+    />
 
     <PedidosYaPagoModal
       open={showPedidosYaModal}
