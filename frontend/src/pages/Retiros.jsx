@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { CheckCircle2, AlertCircle } from 'lucide-react'
+import { CheckCircle2, AlertCircle, X } from 'lucide-react'
 import { retirosAPI } from '../services/api'
 import { hoyLocalISO } from '../utils/fechas'
 
@@ -35,6 +35,7 @@ const Retiros = () => {
   const [monto, setMonto] = useState('')
   const [motivoEf, setMotivoEf] = useState('')
   const [guardandoEf, setGuardandoEf] = useState(false)
+  const [confirmacion, setConfirmacion] = useState(null)
 
   const loadHistorial = useCallback(async () => {
     setLoadingHist(true)
@@ -52,10 +53,26 @@ const Retiros = () => {
     loadHistorial()
   }, [loadHistorial])
 
-  const registrarEfectivo = async (e) => {
+  const pedirConfirmacion = (e) => {
     e.preventDefault()
     const m = parseMonto(monto)
     if (!Number.isFinite(m) || m <= 0) {
+      setMensaje({ tipo: 'aviso', texto: 'Ingrese un monto válido mayor a 0.' })
+      return
+    }
+    setMensaje(null)
+    setConfirmacion({ monto: m, motivo: motivoEf.trim() })
+  }
+
+  const cancelarConfirmacion = () => {
+    if (guardandoEf) return
+    setConfirmacion(null)
+  }
+
+  const registrarEfectivo = async () => {
+    const m = Number(confirmacion?.monto)
+    if (!Number.isFinite(m) || m <= 0) {
+      setConfirmacion(null)
       setMensaje({ tipo: 'aviso', texto: 'Ingrese un monto válido mayor a 0.' })
       return
     }
@@ -65,7 +82,7 @@ const Retiros = () => {
       await retirosAPI.efectivo({
         monto: m,
         metodo_pago: 'efectivo',
-        motivo: motivoEf.trim() || undefined
+        motivo: confirmacion.motivo || undefined
       })
       setMensaje({
         tipo: 'ok',
@@ -73,6 +90,7 @@ const Retiros = () => {
       })
       setMonto('')
       setMotivoEf('')
+      setConfirmacion(null)
       await loadHistorial()
     } catch (err) {
       setMensaje({
@@ -114,7 +132,7 @@ const Retiros = () => {
       )}
 
       <form
-        onSubmit={registrarEfectivo}
+        onSubmit={pedirConfirmacion}
         className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4"
       >
         <div>
@@ -172,7 +190,78 @@ const Retiros = () => {
             ))}
           </ul>
         )}
-      </section>
+        </section>
+
+      {confirmacion && (
+        <div
+          className="fixed inset-0 z-[95] flex justify-center sm:items-center bg-black/50 sm:p-4"
+          onClick={cancelarConfirmacion}
+          role="presentation"
+        >
+          <div
+            className="bg-white dark:bg-slate-900 w-full max-w-md h-auto max-h-[92dvh] overflow-hidden flex flex-col shadow-2xl sm:rounded-2xl my-auto"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirmar-retiro-titulo"
+          >
+            <div className="shrink-0 px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between gap-3">
+              <h3
+                id="confirmar-retiro-titulo"
+                className="text-lg font-semibold text-gray-900 dark:text-slate-50"
+              >
+                Confirmar retiro
+              </h3>
+              <button
+                type="button"
+                onClick={cancelarConfirmacion}
+                disabled={guardandoEf}
+                className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800"
+                aria-label="Cerrar"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="px-5 py-5 space-y-3">
+              <p className="text-sm text-gray-600 dark:text-slate-300">
+                Revisá el monto antes de confirmar. Un cero de más no se puede deshacer fácil.
+              </p>
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-slate-400 text-center">
+                Vas a retirar
+              </p>
+              <p className="text-4xl sm:text-5xl font-extrabold tabular-nums text-center text-amber-700 dark:text-amber-300">
+                {fmtMoney(confirmacion.monto)}
+              </p>
+              {confirmacion.motivo ? (
+                <p className="text-sm text-center text-gray-600 dark:text-slate-300">
+                  Dueño: <strong>{confirmacion.motivo}</strong>
+                </p>
+              ) : null}
+              <p className="text-xs text-center text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
+                Este importe se resta del efectivo de caja del turno.
+              </p>
+            </div>
+            <div className="shrink-0 px-5 py-4 border-t border-gray-100 dark:border-slate-700 flex flex-col-reverse sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={cancelarConfirmacion}
+                disabled={guardandoEf}
+                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 font-medium"
+              >
+                Volver a corregir
+              </button>
+              <button
+                type="button"
+                onClick={registrarEfectivo}
+                disabled={guardandoEf}
+                className="flex-1 px-4 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold disabled:opacity-50"
+              >
+                {guardandoEf ? 'Guardando…' : 'Sí, retirar este monto'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -12,7 +12,7 @@ import {
   bloqueAperturaCajaHtml,
   formatFechaCaja
 } from './cierreHelpers'
-import { esDetalleCierreV2, claseMontoNeto, lineasRubrosCierre, formatAperturaCajaHora } from '../../utils/cierreCajaDisplay'
+import { esDetalleCierreV2, claseMontoNeto, extraRubroCierre, lineasRubrosCierre, formatAperturaCajaHora } from '../../utils/cierreCajaDisplay'
 
 const ITEMS_PAGE = 20
 
@@ -678,6 +678,9 @@ const HistorialCierresCaja = () => {
                                       })}{' '}
                                       u.
                                     </p>
+                                    {extraRubroCierre(r) ? (
+                                      <p className="text-[11px] text-rose-800 mt-0.5">{extraRubroCierre(r)}</p>
+                                    ) : null}
                                   </div>
                                 ))}
                               </div>

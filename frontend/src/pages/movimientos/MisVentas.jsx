@@ -60,7 +60,7 @@ const ETIQUETA_METODO = {
 const ORDEN_METODO = ['efectivo', 'transferencia', 'tarjeta', 'fiado', 'sin_definir']
 
 function textoMetodoPago(m) {
-  if (!m.metodo_pago) return '—'
+  let texto = '—'
   if (m.metodo_pago === 'mixto') {
     const p = parsePagosDesglose(m)
     if (p && typeof p === 'object') {
@@ -70,11 +70,17 @@ function textoMetodoPago(m) {
           ([k, v]) =>
             `${(ETIQUETA_METODO[k] || k)} ${fmtMoney(Number(v))}`
         )
-      return parts.length ? parts.join(' · ') : 'Mixto'
+      texto = parts.length ? parts.join(' · ') : 'Mixto'
+    } else {
+      texto = 'Mixto'
     }
-    return 'Mixto'
+  } else if (m.metodo_pago) {
+    texto = (ETIQUETA_METODO[m.metodo_pago] || m.metodo_pago).toString()
   }
-  return (ETIQUETA_METODO[m.metodo_pago] || m.metodo_pago).toString()
+  if (String(m.motivo || '').toLowerCase().includes('pedidos ya') && texto !== '—') {
+    return `Pedidos Ya · ${texto}`
+  }
+  return texto
 }
 
 const MisVentas = () => {

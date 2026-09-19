@@ -92,7 +92,18 @@ export function claseMontoNeto(n) {
 
 /** Rubros discriminados (milanesas unificadas como en el dashboard). */
 const KEYS_MILANESAS_UNIFICADAS = ['milanesas', 'sandwich_milanesas', 'rollitos_jamon_queso']
-const ORDEN_RUBROS_RESTO = ['cigarrillos', 'cafe_maquina', 'electronica']
+const ORDEN_RUBROS_RESTO = ['cigarrillos', 'cafe_maquina', 'electronica', 'pedidos_ya']
+
+export const SUBTITULO_RUBROS_CIERRE =
+  'Milanesas (incluye sandwich y rollitos), cigarrillos, café máquina, electrónica, Pedidos Ya y las categorías agregadas al dashboard'
+
+export function extraRubroCierre(r) {
+  if (!r || r.key !== 'pedidos_ya') return ''
+  const ef = Number(r.efectivo || 0)
+  const tr = Number(r.transferencia || 0)
+  if (ef <= 0 && tr <= 0) return ''
+  return `Efectivo ${fmtMoney(ef)} · Transf. ${fmtMoney(tr)}`
+}
 
 export function lineasRubrosCierre(cierre) {
   const detalle = parseDetalleMetodosCierre(cierre)
@@ -107,7 +118,9 @@ export function lineasRubrosCierre(cierre) {
       label: r.label || key,
       total: Number(r.total ?? 0),
       movimientos: Number(r.movimientos ?? 0),
-      unidades: Number(r.unidades ?? 0)
+      unidades: Number(r.unidades ?? 0),
+      efectivo: r.efectivo != null ? Number(r.efectivo) : null,
+      transferencia: r.transferencia != null ? Number(r.transferencia) : null
     }
   }
 
@@ -130,8 +143,15 @@ export function lineasRubrosCierre(cierre) {
   }
 
   const conocidos = new Set([...KEYS_MILANESAS_UNIFICADAS, ...ORDEN_RUBROS_RESTO])
-  for (const key of Object.keys(rubros)) {
-    if (conocidos.has(key)) continue
+  const extras = Object.keys(rubros)
+    .filter((key) => !conocidos.has(key))
+    .sort((a, b) => {
+      const na = a.startsWith('contador_') ? Number(a.slice(10)) : Number.NaN
+      const nb = b.startsWith('contador_') ? Number(b.slice(10)) : Number.NaN
+      if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb
+      return a.localeCompare(b)
+    })
+  for (const key of extras) {
     const r = tomar(key)
     if (r) out.push(r)
   }

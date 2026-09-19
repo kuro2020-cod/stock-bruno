@@ -321,6 +321,140 @@ async function resumenIngresosEfectivo(periodo, filtro = null) {
   };
 }
 
+const SQL_PEDIDOS_YA = `LOWER(COALESCE(m.motivo, '')) LIKE '%pedidos ya%'`;
+
+function normalizarLabelRubro(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+async function resumenContadoresDashboard(periodo, filtro = null) {
+  const configs = await db.all(
+    `
+    SELECT dc.id, dc.categoria_id, c.nombre AS categoria_nombre
+    FROM dashboard_contadores dc
+    JOIN categorias c ON c.id = dc.categoria_id
+    ORDER BY dc.id ASC
+  `
+  );
+
+  const condFecha = condicionPeriodoCaja('m', periodo);
+  const condUsuario = condicionUsuarioMovimiento('m', filtro);
+  const out = [];
+
+  for (const row of configs || []) {
+    const params = [...condFecha.params, ...condUsuario.params, row.categoria_id];
+    const stats = await db.get(
+      `
+      SELECT
+        COALESCE(SUM(m.cantidad * COALESCE(m.precio_unitario, 0)), 0)::numeric AS total,
+        COUNT(*)::int AS movimientos,
+        COALESCE(SUM(m.cantidad), 0)::numeric AS unidades
+      FROM movimientos m
+      JOIN productos p ON p.id = m.producto_id
+      WHERE m.tipo = 'salida'
+        AND ${condFecha.sql}${condUsuario.sql}
+        AND p.categoria_id = ?
+        AND UPPER(TRIM(COALESCE(p.codigo, ''))) NOT LIKE 'REINICIO-%'
+    `,
+      params
+    );
+
+    const label = String(row.categoria_nombre || 'CATEGORÍA').trim().toUpperCase();
+    out.push({
+      key: `contador_${row.id}`,
+      label,
+      total: round2(stats?.total ?? 0),
+      movimientos: Number(stats?.movimientos ?? 0),
+      unidades: Number(stats?.unidades ?? 0)
+    });
+  }
+
+  return out;
+}
+
+async function resumenPedidosYa(periodo, filtro = null) {
+  const condFecha = condicionPeriodoCaja('m', periodo);
+  const condUsuario = condicionUsuarioMovimiento('m', filtro);
+  const params = [...condFecha.params, ...condUsuario.params];
+
+  const row = await db.get(
+    `
+    SELECT
+      COALESCE(SUM(m.cantidad * COALESCE(m.precio_unitario, 0)), 0)::numeric AS total,
+      COUNT(*)::int AS movimientos,
+      COALESCE(SUM(m.cantidad), 0)::numeric AS unidades
+    FROM movimientos m
+    WHERE m.tipo = 'salida'
+      AND ${condFecha.sql}${condUsuario.sql}
+      AND ${SQL_PEDIDOS_YA}
+  `,
+    params
+  );
+
+  const rowsDesglose = await db.all(
+    `
+    SELECT
+      e.key AS metodo,
+      COALESCE(SUM((e.value)::numeric), 0)::numeric AS total
+    FROM movimientos m
+    CROSS JOIN LATERAL jsonb_each_text(m.pagos_desglose) AS e(key, value)
+    WHERE m.tipo = 'salida'
+      AND ${condFecha.sql}${condUsuario.sql}
+      AND ${SQL_PEDIDOS_YA}
+      AND m.pagos_desglose IS NOT NULL
+      AND jsonb_typeof(m.pagos_desglose) = 'object'
+      AND m.pagos_desglose <> '{}'::jsonb
+      AND e.key IN ('efectivo', 'transferencia', 'tarjeta', 'fiado')
+    GROUP BY e.key
+  `,
+    params
+  );
+
+  const rowsSimple = await db.all(
+    `
+    SELECT
+      COALESCE(NULLIF(m.metodo_pago, 'mixto'), 'sin_definir') AS metodo_pago,
+      COALESCE(SUM(m.cantidad * COALESCE(m.precio_unitario, 0)), 0)::numeric AS total
+    FROM movimientos m
+    WHERE m.tipo = 'salida'
+      AND ${condFecha.sql}${condUsuario.sql}
+      AND ${SQL_PEDIDOS_YA}
+      AND (
+        m.pagos_desglose IS NULL
+        OR m.pagos_desglose = '{}'::jsonb
+        OR jsonb_typeof(m.pagos_desglose) <> 'object'
+      )
+      AND (m.metodo_pago IS NULL OR m.metodo_pago <> 'mixto')
+    GROUP BY COALESCE(NULLIF(m.metodo_pago, 'mixto'), 'sin_definir')
+  `,
+    params
+  );
+
+  let efectivo = 0;
+  let transferencia = 0;
+  for (const r of [...(rowsDesglose || []), ...(rowsSimple || [])]) {
+    const key = String(r.metodo || r.metodo_pago || '').toLowerCase();
+    const val = Number(r.total || 0);
+    if (key === 'efectivo') efectivo += val;
+    if (key === 'transferencia') transferencia += val;
+  }
+
+  return {
+    key: 'pedidos_ya',
+    label: 'PEDIDOS YA',
+    total: round2(row?.total ?? 0),
+    movimientos: Number(row?.movimientos ?? 0),
+    unidades: Number(row?.unidades ?? 0),
+    efectivo: round2(efectivo),
+    transferencia: round2(transferencia)
+  };
+}
+
 /** Rubros a discriminar en arqueo / cierre (por nombre o categoría del producto). */
 const RUBROS_ESPECIALES = [
   {
@@ -450,36 +584,44 @@ async function resumenRubrosEspeciales(periodo, filtro = null) {
     };
   }
 
-  return {
-    milanesas: out.milanesas,
-    sandwich_milanesas: out.sandwich_milanesas,
-    rollitos_jamon_queso: out.rollitos_jamon_queso,
-    cigarrillos: out.cigarrillos,
-    cafe_maquina: out.cafe_maquina,
-    electronica: out.electronica,
-    lista: [
-      {
-        key: 'milanesas',
-        label: 'MILANESAS',
-        total: round2(
-          Number(out.milanesas?.total || 0) +
-            Number(out.sandwich_milanesas?.total || 0) +
-            Number(out.rollitos_jamon_queso?.total || 0)
-        ),
-        movimientos:
-          Number(out.milanesas?.movimientos || 0) +
-          Number(out.sandwich_milanesas?.movimientos || 0) +
-          Number(out.rollitos_jamon_queso?.movimientos || 0),
-        unidades:
-          Number(out.milanesas?.unidades || 0) +
-          Number(out.sandwich_milanesas?.unidades || 0) +
-          Number(out.rollitos_jamon_queso?.unidades || 0)
-      },
-      out.cigarrillos,
-      out.cafe_maquina,
-      out.electronica
-    ]
-  };
+  const pedidosYa = await resumenPedidosYa(periodo, filtro);
+  out.pedidos_ya = pedidosYa;
+
+  const lista = [
+    {
+      key: 'milanesas',
+      label: 'MILANESAS',
+      total: round2(
+        Number(out.milanesas?.total || 0) +
+          Number(out.sandwich_milanesas?.total || 0) +
+          Number(out.rollitos_jamon_queso?.total || 0)
+      ),
+      movimientos:
+        Number(out.milanesas?.movimientos || 0) +
+        Number(out.sandwich_milanesas?.movimientos || 0) +
+        Number(out.rollitos_jamon_queso?.movimientos || 0),
+      unidades:
+        Number(out.milanesas?.unidades || 0) +
+        Number(out.sandwich_milanesas?.unidades || 0) +
+        Number(out.rollitos_jamon_queso?.unidades || 0)
+    },
+    out.cigarrillos,
+    out.cafe_maquina,
+    out.electronica,
+    pedidosYa
+  ];
+
+  const labelsUsados = new Set(lista.map((r) => normalizarLabelRubro(r?.label)));
+  const contadores = await resumenContadoresDashboard(periodo, filtro);
+  for (const contador of contadores) {
+    const norm = normalizarLabelRubro(contador.label);
+    if (norm && labelsUsados.has(norm)) continue;
+    if (norm) labelsUsados.add(norm);
+    out[contador.key] = contador;
+    lista.push(contador);
+  }
+
+  return { ...out, lista };
 }
 
 function calcularNeto(
@@ -689,7 +831,9 @@ export function construirDetalleCierre(
         label: r.label,
         total: r.total,
         movimientos: r.movimientos,
-        unidades: r.unidades
+        unidades: r.unidades,
+        ...(r.efectivo != null ? { efectivo: r.efectivo } : {}),
+        ...(r.transferencia != null ? { transferencia: r.transferencia } : {})
       };
     }
   }

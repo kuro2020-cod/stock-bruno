@@ -4,7 +4,9 @@ import {
   METODOS_CIERRE_ORDEN,
   METODOS_PROVEEDOR_ORDEN,
   lineasRubrosCierre,
-  formatAperturaCajaHora
+  extraRubroCierre,
+  formatAperturaCajaHora,
+  SUBTITULO_RUBROS_CIERRE
 } from '../../utils/cierreCajaDisplay'
 
 export const fmtMoney = (n) =>
@@ -57,22 +59,24 @@ export const bloqueRubrosHtml = (detalle) => {
   if (!rubros.length) return ''
 
   const cards = rubros
-    .map(
-      (r) => `
+    .map((r) => {
+      const extra = extraRubroCierre(r)
+      return `
       <div class="rubro">
         <div class="lbl">${r.label}</div>
         <div class="val">${fmtMoney(r.total)}</div>
         <div class="meta">${r.movimientos || 0} mov. · ${Number(r.unidades || 0).toLocaleString('es-ES', {
           maximumFractionDigits: 3
         })} u.</div>
+        ${extra ? `<div class="meta">${extra}</div>` : ''}
       </div>`
-    )
+    })
     .join('')
 
   return `
     <div class="rubros-wrap">
       <p class="rubros-title">Discriminación de rubros</p>
-      <p class="rubros-sub">Milanesas (incluye sandwich y rollitos), cigarrillos, café máquina y electrónica</p>
+      <p class="rubros-sub">${SUBTITULO_RUBROS_CIERRE}</p>
       <div class="rubros-grid">${cards}</div>
     </div>`
 }

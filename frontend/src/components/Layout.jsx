@@ -35,7 +35,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
-import { fmtMoney, lineasTotalesCierre, lineasRubrosCierre, claseMontoNeto, datosAperturaCierre } from '../utils/cierreCajaDisplay'
+import { fmtMoney, lineasTotalesCierre, lineasRubrosCierre, extraRubroCierre, claseMontoNeto, datosAperturaCierre } from '../utils/cierreCajaDisplay'
 import ArqueoParcialModal from './ArqueoParcialModal'
 import AlertaVencimientos from './AlertaVencimientos'
 import { esAccesoLimitado } from '../utils/acceso'
@@ -510,9 +510,11 @@ const Layout = ({ children }) => {
                       <p className="text-[10px] font-bold uppercase tracking-wide text-violet-700 dark:text-violet-300 mb-1">
                         Rubros
                       </p>
-                      {rubrosCierre.map(({ key, label, total, movimientos, unidades }) => {
+                      {rubrosCierre.map((rubro) => {
+                        const { key, label, total, movimientos, unidades } = rubro
                         const u = Number(unidades) || 0
                         const esCafe = key === 'cafe_maquina'
+                        const extra = extraRubroCierre(rubro)
                         return (
                           <div key={key} className="flex justify-between gap-3 text-sm">
                             <span className="text-slate-600 dark:text-slate-300">{label}</span>
@@ -529,6 +531,11 @@ const Layout = ({ children }) => {
                                     : ''}
                                 )
                               </span>
+                              {extra ? (
+                                <span className="block text-[10px] font-normal text-rose-700 dark:text-rose-300">
+                                  {extra}
+                                </span>
+                              ) : null}
                             </span>
                           </div>
                         )

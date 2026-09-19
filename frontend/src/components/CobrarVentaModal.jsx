@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { X, Banknote, Smartphone, CreditCard, BookUser, CheckCircle, PackageMinus } from 'lucide-react'
+import { X, Banknote, Smartphone, CreditCard, BookUser, CheckCircle, PackageMinus, Bike } from 'lucide-react'
 import IndicadorSaldoPago from './IndicadorSaldoPago'
+import PedidosYaPagoModal from './PedidosYaPagoModal'
 import { fmtMoney } from '../utils/promociones'
 import {
   parseMontoPago,
@@ -23,8 +24,16 @@ const METODOS = [
   { key: 'transferencia', label: 'Transferencia', Icon: Smartphone },
   { key: 'tarjeta', label: 'Tarjeta', Icon: CreditCard },
   { key: 'fiado', label: 'Fiado', Icon: BookUser },
+  { key: 'pedidos_ya', label: 'Pedidos Ya', Icon: Bike },
   { key: 'retiro', label: 'Retiro', Icon: PackageMinus }
 ]
+
+const pedidosYaVacio = () => ({
+  medios: [],
+  montos: { efectivo: '', transferencia: '' },
+  montoRecibidoEfectivo: '',
+  pagosResueltos: null
+})
 
 export default function CobrarVentaModal({
   open,
@@ -40,6 +49,8 @@ export default function CobrarVentaModal({
   const [montoRecibidoEfectivo, setMontoRecibidoEfectivo] = useState('')
   const [nombreDueno, setNombreDueno] = useState('')
   const [error, setError] = useState('')
+  const [showPedidosYaModal, setShowPedidosYaModal] = useState(false)
+  const [pedidosYaConfig, setPedidosYaConfig] = useState(pedidosYaVacio)
 
   const pagoCombinado = metodosSeleccionados.length >= 2
   const metodoUnico = metodosSeleccionados.length === 1 ? metodosSeleccionados[0] : ''
@@ -51,6 +62,8 @@ export default function CobrarVentaModal({
     setMontoRecibidoEfectivo('')
     setNombreDueno('')
     setError('')
+    setShowPedidosYaModal(false)
+    setPedidosYaConfig(pedidosYaVacio())
   }, [open])
 
   useEffect(() => {
@@ -115,10 +128,15 @@ export default function CobrarVentaModal({
     !pagoCombinado &&
     (metodoUnico !== 'efectivo' || esDevolucionEnvase || efectivoOk)
 
+  const pedidosYaListo = Boolean(pedidosYaConfig.medios?.length)
   const confirmarDeshabilitado =
     submitting ||
     metodosSeleccionados.length === 0 ||
-    (pagoCombinado ? !pagoCombinadoListo : !pagoUnicoListo) ||
+    (metodoUnico === 'pedidos_ya'
+      ? !pedidosYaListo
+      : pagoCombinado
+        ? !pagoCombinadoListo
+        : !pagoUnicoListo) ||
     (metodoUnico === 'retiro' && !String(nombreDueno).trim())
 
   const montoFiadoCombinado = useMemo(() => {
@@ -130,20 +148,89 @@ export default function CobrarVentaModal({
   const requiereNombreFiado =
     metodoUnico === 'fiado' || (pagoCombinado && montoFiadoCombinado > 0)
 
+  const esMetodoExclusivo = (key) => key === 'retiro' || key === 'pedidos_ya'
+
   const toggleMetodo = (key) => {
     setError('')
     setMetodosSeleccionados((prev) => {
       if (prev.includes(key)) {
         setMontosPago((m) => ({ ...m, [key]: '' }))
         if (key === 'efectivo') setMontoRecibidoEfectivo('')
+        if (key === 'pedidos_ya') {
+          setShowPedidosYaModal(false)
+          setPedidosYaConfig(pedidosYaVacio())
+        }
         return prev.filter((k) => k !== key)
       }
-      if (key === 'retiro' || prev.includes('retiro') || esDevolucionEnvase) {
+      if (
+        esMetodoExclusivo(key) ||
+        prev.includes('retiro') ||
+        prev.includes('pedidos_ya') ||
+        esDevolucionEnvase
+      ) {
         setMontosPago(montosVacios())
         setMontoRecibidoEfectivo('')
+        if (key === 'pedidos_ya') {
+          setShowPedidosYaModal(true)
+        } else {
+          setShowPedidosYaModal(false)
+          setPedidosYaConfig(pedidosYaVacio())
+        }
         return [key]
       }
+      if (key === 'pedidos_ya') {
+        setShowPedidosYaModal(true)
+      }
       return [...prev, key]
+    })
+  }
+
+  const confirmarPedidosYa = (config = pedidosYaConfig) => {
+    const medios = config.medios || []
+    if (!medios.length) {
+      setError('En Pedidos Ya elegí efectivo, transferencia o ambos.')
+      setShowPedidosYaModal(true)
+      return
+    }
+
+    if (medios.length >= 2) {
+      const resolucion = config.pagosResueltos
+        ? { ok: true, entries: config.pagosResueltos }
+        : resolverPagosCombinados(medios, config.montos, total)
+      if (!resolucion.ok) {
+        setError(resolucion.error || 'Revisá los importes de Pedidos Ya.')
+        setShowPedidosYaModal(true)
+        return
+      }
+      onConfirm({
+        pagoCombinado: true,
+        metodoPago: '',
+        montosPago: { ...montosVacios(), ...config.montos },
+        montoRecibidoEfectivo: '',
+        metodosSeleccionados: medios,
+        pagosResueltos: resolucion.entries,
+        canalPago: 'pedidos_ya'
+      })
+      return
+    }
+
+    const unicoPy = medios[0]
+    if (unicoPy === 'efectivo' && !esDevolucionEnvase) {
+      const recibido = parseMontoPago(config.montoRecibidoEfectivo)
+      if (Number.isNaN(recibido) || String(config.montoRecibidoEfectivo).trim() === '' || recibido + 1e-9 < total) {
+        setError('Indicá con cuánto paga en efectivo (debe cubrir el total).')
+        setShowPedidosYaModal(true)
+        return
+      }
+    }
+
+    onConfirm({
+      pagoCombinado: false,
+      metodoPago: unicoPy,
+      montosPago: montosVacios(),
+      montoRecibidoEfectivo: unicoPy === 'efectivo' ? config.montoRecibidoEfectivo : '',
+      metodosSeleccionados: medios,
+      canalPago: 'pedidos_ya'
     })
   }
 
@@ -151,6 +238,11 @@ export default function CobrarVentaModal({
     setError('')
     if (metodosSeleccionados.length === 0) {
       setError('Seleccioná al menos un método de pago.')
+      return
+    }
+
+    if (metodoUnico === 'pedidos_ya') {
+      confirmarPedidosYa()
       return
     }
 
@@ -204,6 +296,7 @@ export default function CobrarVentaModal({
   if (!open) return null
 
   return (
+    <>
     <div
       className="fixed inset-0 z-[95] flex justify-center sm:items-center bg-black/50 sm:p-4"
       onClick={onClose}
@@ -257,7 +350,7 @@ export default function CobrarVentaModal({
               {!esDevolucionEnvase && (
                 <span className="font-normal text-gray-500 dark:text-slate-400">
                   {' '}
-                  · podés combinar efectivo, transferencia, tarjeta o fiado. Retiro va solo.
+                  · podés combinar efectivo, transferencia, tarjeta o fiado. Pedidos Ya y retiro van solos.
                 </span>
               )}
             </p>
@@ -273,7 +366,9 @@ export default function CobrarVentaModal({
                       activo
                         ? key === 'retiro'
                           ? 'border-amber-500 bg-amber-50 text-amber-950 dark:bg-amber-950/50 dark:text-amber-100 dark:border-amber-400'
-                          : 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100 dark:border-emerald-400'
+                          : key === 'pedidos_ya'
+                            ? 'border-rose-500 bg-rose-50 text-rose-950 dark:bg-rose-950/50 dark:text-rose-100 dark:border-rose-400'
+                            : 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100 dark:border-emerald-400'
                         : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-emerald-600'
                     }`}
                   >
@@ -283,7 +378,9 @@ export default function CobrarVentaModal({
                         activo
                           ? key === 'retiro'
                             ? 'text-amber-600 dark:text-amber-300'
-                            : 'text-emerald-600 dark:text-emerald-300'
+                            : key === 'pedidos_ya'
+                              ? 'text-rose-600 dark:text-rose-300'
+                              : 'text-emerald-600 dark:text-emerald-300'
                           : ''
                       }
                     />
@@ -347,6 +444,51 @@ export default function CobrarVentaModal({
                   detalle={indicadorCombinado.detalle}
                 />
               )}
+            </div>
+          )}
+
+          {metodoUnico === 'pedidos_ya' && (
+            <div className="space-y-3 rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-4 sm:p-5">
+              {pedidosYaListo ? (
+                <>
+                  <p className="text-sm text-rose-950 dark:text-rose-100">
+                    Pedidos Ya se cobra como{' '}
+                    <strong>
+                      {pedidosYaConfig.medios
+                        .map((k) => (k === 'efectivo' ? 'efectivo' : 'transferencia'))
+                        .join(' + ')}
+                    </strong>
+                    . El efectivo entra a caja; la transferencia no.
+                  </p>
+                  {pedidosYaConfig.medios.length >= 2 && pedidosYaConfig.pagosResueltos?.length > 0 && (
+                    <ul className="text-sm tabular-nums text-rose-900 dark:text-rose-100 space-y-1">
+                      {pedidosYaConfig.pagosResueltos.map((p) => (
+                        <li key={p.metodo}>
+                          {p.metodo === 'efectivo' ? 'Efectivo' : 'Transferencia'}: {fmtMoney(p.monto)}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {pedidosYaConfig.medios.length === 1 && pedidosYaConfig.medios[0] === 'efectivo' &&
+                    pedidosYaConfig.montoRecibidoEfectivo && (
+                      <p className="text-sm tabular-nums text-rose-900 dark:text-rose-100">
+                        Recibido {fmtMoney(parseMontoPago(pedidosYaConfig.montoRecibidoEfectivo))} · entra a
+                        caja {fmtMoney(total)}
+                      </p>
+                    )}
+                </>
+              ) : (
+                <p className="text-sm text-rose-950 dark:text-rose-100">
+                  Elegí si Pedidos Ya te pagó en efectivo, transferencia o ambos.
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowPedidosYaModal(true)}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold"
+              >
+                {pedidosYaListo ? 'Cambiar medios Pedidos Ya' : 'Elegir efectivo o transferencia'}
+              </button>
             </div>
           )}
 
@@ -478,7 +620,9 @@ export default function CobrarVentaModal({
             className={`flex-1 inline-flex items-center justify-center gap-2 px-4 py-3.5 sm:py-4 rounded-xl text-white font-semibold text-base disabled:opacity-50 ${
               metodoUnico === 'retiro'
                 ? 'bg-amber-600 hover:bg-amber-700'
-                : 'bg-emerald-600 hover:bg-emerald-700'
+                : metodoUnico === 'pedidos_ya'
+                  ? 'bg-rose-600 hover:bg-rose-700'
+                  : 'bg-emerald-600 hover:bg-emerald-700'
             }`}
           >
             <CheckCircle size={20} />
@@ -487,5 +631,36 @@ export default function CobrarVentaModal({
         </div>
       </div>
     </div>
+
+    <PedidosYaPagoModal
+      open={showPedidosYaModal}
+      total={total}
+      esDevolucionEnvase={esDevolucionEnvase}
+      submitting={submitting}
+      initialMedios={pedidosYaConfig.medios}
+      initialMontos={pedidosYaConfig.montos}
+      initialRecibido={pedidosYaConfig.montoRecibidoEfectivo}
+      onClose={() => {
+        if (submitting) return
+        setShowPedidosYaModal(false)
+        setPedidosYaConfig(pedidosYaVacio())
+        setMetodosSeleccionados((prev) => prev.filter((k) => k !== 'pedidos_ya'))
+      }}
+      onConfirm={(config) => {
+        const next = {
+          medios: config.medios,
+          montos: config.montos,
+          montoRecibidoEfectivo: config.montoRecibidoEfectivo,
+          pagosResueltos: config.pagosResueltos
+        }
+        setPedidosYaConfig(next)
+        setError('')
+        if (next.medios.includes('transferencia')) {
+          setShowPedidosYaModal(false)
+        }
+        confirmarPedidosYa(next)
+      }}
+    />
+    </>
   )
 }

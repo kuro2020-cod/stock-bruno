@@ -1969,6 +1969,14 @@ const Ventas = () => {
       showToast({ type: 'msg', variant: 'warn', message: 'Seleccione un método de pago.' })
       return
     }
+    if (!payCombinado && payMetodo === 'pedidos_ya') {
+      showToast({
+        type: 'msg',
+        variant: 'warn',
+        message: 'En Pedidos Ya elegí efectivo, transferencia o ambos.'
+      })
+      return
+    }
     const sinCantidad = cart.find((l) => {
       const q = numCantidadLinea(l.cantidad)
       return !Number.isFinite(q) || q <= 0
@@ -2114,6 +2122,9 @@ const Ventas = () => {
     }
     if (requiereFiadoNombre) {
       payload.cliente_fiado = String(clienteFiado).trim() || clienteCobroFiado
+    }
+    if (paymentOverride?.canalPago === 'pedidos_ya') {
+      payload.motivo = 'Venta Pedidos Ya'
     }
 
     let montoTransferencia = 0

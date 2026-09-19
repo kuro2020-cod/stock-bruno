@@ -11,7 +11,7 @@ import { hoyLocalISO } from '../../utils/fechas'
 const hoyISO = hoyLocalISO
 
 function textoMetodoPago(m) {
-  if (!m.metodo_pago) return '—'
+  let texto = '—'
   if (m.metodo_pago === 'mixto') {
     const p = parsePagosDesglose(m)
     if (p && typeof p === 'object') {
@@ -24,11 +24,17 @@ function textoMetodoPago(m) {
               maximumFractionDigits: 2
             })}`
         )
-      return parts.length ? `Mixto (${parts.join(' · ')})` : 'MIXTO'
+      texto = parts.length ? `Mixto (${parts.join(' · ')})` : 'MIXTO'
+    } else {
+      texto = 'MIXTO'
     }
-    return 'MIXTO'
+  } else if (m.metodo_pago) {
+    texto = m.metodo_pago.toUpperCase()
   }
-  return m.metodo_pago.toUpperCase()
+  if (String(m.motivo || '').toLowerCase().includes('pedidos ya') && texto !== '—') {
+    return `PEDIDOS YA · ${texto}`
+  }
+  return texto
 }
 
 /** Filtro por medio: incluye líneas mixtas que tengan ese medio en el desglose. */
