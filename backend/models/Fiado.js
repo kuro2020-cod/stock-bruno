@@ -303,21 +303,11 @@ export class Fiado {
       throw new Error('No hay fiados pendientes para cobrar');
     }
 
-    const pendientes = await enriquecerFiados(pendientesRaw.map(mapRow), runner);
-    for (const row of pendientes) {
-      await sincronizarMontoFiadoPendiente(row, runner);
+    const pendientesSync = [];
+    for (const row of pendientesRaw.map(mapRow)) {
+      const synced = await sincronizarMontoFiadoPendiente(row, runner);
+      if (synced && synced.estado === 'pendiente') pendientesSync.push(synced);
     }
-
-    const pendientesSync = await runner.all(
-      `
-      SELECT id, monto
-      FROM fiados
-      WHERE id IN (${placeholders})
-        AND estado = 'pendiente'
-      ORDER BY fecha ASC, id ASC
-    `,
-      idList
-    );
     if (!pendientesSync.length) {
       throw new Error('No hay fiados pendientes para cobrar');
     }
@@ -378,21 +368,17 @@ export class Fiado {
     );
     if (!pendientesRaw.length) return [];
 
-    const pendientes = await enriquecerFiados(pendientesRaw.map(mapRow), runner);
-    for (const row of pendientes) {
-      await sincronizarMontoFiadoPendiente(row, runner);
+    const synced = [];
+    for (const row of pendientesRaw.map(mapRow)) {
+      const next = await sincronizarMontoFiadoPendiente(row, runner);
+      if (next && next.estado === 'pendiente') synced.push(next);
     }
-
-    return runner.all(
-      `
-      SELECT id, monto, fecha, cliente_nombre
-      FROM fiados
-      WHERE id IN (${placeholders})
-        AND estado = 'pendiente'
-      ORDER BY fecha ASC, id ASC
-    `,
-      ids
-    );
+    return synced.map((r) => ({
+      id: r.id,
+      monto: round2(r.monto),
+      fecha: r.fecha,
+      cliente_nombre: r.cliente_nombre
+    }));
   }
 
   static async _aplicarPagoParcialCola(pendientes, { cash, pagoReal, authUser }, runner = db) {
@@ -590,20 +576,11 @@ export class Fiado {
     `,
       [nombre]
     );
-    const pendientes = await enriquecerFiados(pendientesRaw.map(mapRow));
-    for (const row of pendientes) {
-      await sincronizarMontoFiadoPendiente(row);
+    const pendientesSync = [];
+    for (const row of pendientesRaw.map(mapRow)) {
+      const synced = await sincronizarMontoFiadoPendiente(row);
+      if (synced && synced.estado === 'pendiente') pendientesSync.push(synced);
     }
-    const pendientesSync = await db.all(
-      `
-      SELECT id, monto
-      FROM fiados
-      WHERE LOWER(TRIM(cliente_nombre)) = LOWER(TRIM(?))
-        AND estado = 'pendiente'
-      ORDER BY fecha ASC, id ASC
-    `,
-      [nombre]
-    );
     if (!pendientesSync.length) {
       throw new Error('No hay fiados pendientes para esta persona');
     }
@@ -678,20 +655,18 @@ export class Fiado {
       `,
         [nombre]
       );
-      const enriquecidos = await enriquecerFiados(pendientesRaw.map(mapRow));
-      for (const row of enriquecidos) {
-        await sincronizarMontoFiadoPendiente(row);
+      pendientes = [];
+      for (const row of pendientesRaw.map(mapRow)) {
+        const synced = await sincronizarMontoFiadoPendiente(row);
+        if (synced && synced.estado === 'pendiente') {
+          pendientes.push({
+            id: synced.id,
+            monto: synced.monto,
+            fecha: synced.fecha,
+            cliente_nombre: synced.cliente_nombre
+          });
+        }
       }
-      pendientes = await db.all(
-        `
-        SELECT id, monto, fecha, cliente_nombre
-        FROM fiados
-        WHERE LOWER(TRIM(cliente_nombre)) = LOWER(TRIM(?))
-          AND estado = 'pendiente'
-        ORDER BY fecha ASC, id ASC
-      `,
-        [nombre]
-      );
     }
 
     if (!pendientes.length) {

@@ -29,8 +29,13 @@ function precioActualLinea(mov) {
   const precioLista = Number(mov.precio_venta)
   const sinStock = Boolean(mov.no_controla_stock)
   const esEnvase = esEnvaseSistema(mov)
+  const esPromo = mov.promo_id != null && mov.promo_id !== ''
 
   if (esEnvase && sinStock && precioViejo < 0) {
+    return precioViejo
+  }
+  // La promo se cobró a precio promocional; no rearmar la deuda a lista.
+  if (esPromo && Number.isFinite(precioViejo)) {
     return precioViejo
   }
   if (!Number.isFinite(precioLista)) {
@@ -68,8 +73,20 @@ export function recalcularFiadoDesdeMovimientos(movimientos) {
     const cantidad = round4(mov.cantidad)
     const precioViejo = Number(mov.precio_unitario)
     const precioActual = precioActualLinea(mov)
-    const subtotalNuevo = round2(cantidad * precioActual)
-    const subtotalViejo = round2(cantidad * (Number.isFinite(precioViejo) ? precioViejo : precioActual))
+    const esPromo = mov.promo_id != null && mov.promo_id !== ''
+    let subtotalNuevo = round2(cantidad * precioActual)
+    let subtotalViejo = round2(cantidad * (Number.isFinite(precioViejo) ? precioViejo : precioActual))
+    // 733.33 × 3 = 2199.99 cuando la promo vale 2200
+    if (esPromo && cantidad > 1) {
+      const enteros = Math.round(subtotalNuevo)
+      if (Math.abs(subtotalNuevo - enteros) > 0 && Math.abs(subtotalNuevo - enteros) <= 0.011) {
+        subtotalNuevo = enteros
+      }
+      const enterosV = Math.round(subtotalViejo)
+      if (Math.abs(subtotalViejo - enterosV) > 0 && Math.abs(subtotalViejo - enterosV) <= 0.011) {
+        subtotalViejo = enterosV
+      }
+    }
     const fiadoLinea = fiadoDeLinea(mov, subtotalNuevo, subtotalViejo)
 
     if (fiadoLinea < 0.01 && fiadoLinea > -0.01) continue
@@ -291,8 +308,22 @@ export async function sincronizarMontoFiadoPendiente(fiadoRow, runner = db) {
   if (!fiadoRow || fiadoRow.estado !== 'pendiente') return fiadoRow
 
   const [enriquecido] = await enriquecerFiados([fiadoRow], runner)
-  if (!enriquecido || enriquecido.monto === round2(fiadoRow.monto)) {
-    return enriquecido || fiadoRow
+  if (!enriquecido) return fiadoRow
+
+  const storedRow = await runner.get(
+    `
+    SELECT monto
+    FROM fiados
+    WHERE id = ? AND estado = 'pendiente'
+  `,
+    [fiadoRow.id]
+  )
+  if (!storedRow) return enriquecido
+
+  // Comparar contra el monto en DB: el row en memoria puede venir ya enriquecido
+  // y, si coinciden, se salteaba el UPDATE. El cobro después leía el valor viejo.
+  if (enriquecido.monto === round2(storedRow.monto)) {
+    return enriquecido
   }
 
   await runner.run(

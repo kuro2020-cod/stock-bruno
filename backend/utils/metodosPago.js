@@ -18,9 +18,22 @@ export function mergeMontosPorMetodo(pagosArr, metodosPermitidos = METODOS_VENTA
 }
 
 export function resolverMetodoPago({ pagos, metodo_pago, montoTotal, metodosPermitidos = METODOS_VENTA }) {
-  const merged = mergeMontosPorMetodo(Array.isArray(pagos) ? pagos : [], metodosPermitidos);
-  const claves = Object.keys(merged);
+  let merged = mergeMontosPorMetodo(Array.isArray(pagos) ? pagos : [], metodosPermitidos);
   const totalRed = round2(montoTotal);
+
+  if (merged.fiado != null && metodosPermitidos.includes('fiado')) {
+    const otros = Object.keys(merged).filter((k) => k !== 'fiado');
+    const sumaOtros = round2(otros.reduce((s, k) => s + merged[k], 0));
+    if (sumaOtros <= totalRed + 0.05) {
+      const fiado = round2(Math.max(0, totalRed - sumaOtros));
+      const next = {};
+      for (const k of otros) next[k] = merged[k];
+      if (fiado > 0.001) next.fiado = fiado;
+      merged = next;
+    }
+  }
+
+  const claves = Object.keys(merged);
 
   if (claves.length >= 2) {
     const sumPagos = round2(claves.reduce((s, k) => s + merged[k], 0));

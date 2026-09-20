@@ -283,6 +283,7 @@ export default function CobrarVentaModal({
         )
         return
       }
+      setShowDetallePago(false)
       onConfirm({
         pagoCombinado: true,
         metodoPago: '',
@@ -305,6 +306,7 @@ export default function CobrarVentaModal({
       return
     }
 
+    setShowDetallePago(false)
     onConfirm({
       pagoCombinado: false,
       metodoPago: metodoUnico,

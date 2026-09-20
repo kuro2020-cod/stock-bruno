@@ -70,7 +70,7 @@ export default function VerificarTransferenciaMpModal({
 
   return (
     <div
-      className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/45"
+      className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/45"
       onClick={onCancel}
       role="presentation"
     >

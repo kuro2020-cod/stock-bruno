@@ -6,6 +6,25 @@ import crypto from 'crypto';
 const round4 = (n) => Math.round(Number(n) * 10000) / 10000;
 const round2 = (n) => Math.round(Number(n) * 100) / 100;
 
+/** Evita 733.33 × 3 = 2199.99 cuando la promo vale 2200. */
+function cerrarCentavosGruposPromo(detalle) {
+  const groups = new Map();
+  for (const d of detalle || []) {
+    if (d.es_cobro_fiado || !d.promo_id || d.promo_total == null) continue;
+    const key = `${d.promo_id}|${d.promo_unidades || 1}|${d.promo_total}`;
+    if (!groups.has(key)) groups.set(key, { target: round2(d.promo_total), lines: [] });
+    groups.get(key).lines.push(d);
+  }
+  for (const { target, lines } of groups.values()) {
+    const sum = round2(lines.reduce((s, d) => s + round2(d.subtotalLinea), 0));
+    const diff = round2(target - sum);
+    if (Math.abs(diff) < 0.001 || Math.abs(diff) > 0.05) continue;
+    const last = lines[lines.length - 1];
+    last.subtotalLinea = round2(last.subtotalLinea + diff);
+    if (last.cantidad > 0) last.precio = round4(last.subtotalLinea / last.cantidad);
+  }
+}
+
 const METODOS_VALIDOS = ['efectivo', 'transferencia', 'tarjeta', 'fiado'];
 
 /** Café máquina: precio fijo de lista (sin descuentos manuales del carrito). */
@@ -68,40 +87,75 @@ function allocarDesgloseLineas(lineTotals, montosPorMetodo) {
   return out;
 }
 
+/** Si hay fiado, los otros medios son fijos y el fiado cubre el resto del total real. */
+function ajustarFiadoComoResto(merged, totalRed) {
+  if (!merged || merged.fiado == null) return merged;
+  const otrosKeys = Object.keys(merged).filter((k) => k !== 'fiado');
+  if (otrosKeys.length === 0) {
+    return { fiado: totalRed };
+  }
+  const sumaOtros = round2(otrosKeys.reduce((s, k) => s + Number(merged[k] || 0), 0));
+  if (sumaOtros > totalRed + 0.05) {
+    throw new Error(
+      `La suma de los medios ($${sumaOtros.toFixed(2)}) supera el total de la venta ($${totalRed.toFixed(2)})`
+    );
+  }
+  const fiado = round2(Math.max(0, totalRed - sumaOtros));
+  const next = {};
+  for (const k of otrosKeys) next[k] = merged[k];
+  if (fiado > 0.001) next.fiado = fiado;
+  return next;
+}
+
 function pagosArrayDesdeMontos(montos) {
   return Object.entries(montos || {})
     .filter(([, v]) => round2(v) > 0.001)
     .map(([metodo, monto]) => ({ metodo, monto: round2(monto) }));
 }
 
-/** Reparte medios de pago entre cobro de fiado pendiente y venta nueva. */
+/** Reparte medios de pago entre cobro de fiado pendiente y venta nueva.
+ * El efectivo/transferencia/tarjeta baja primero la deuda vieja; el resto queda en fiado. */
 function repartirPagosCombinados(montosPorMetodo, totalCobroFiado, totalVentaNueva) {
-  const total = round2(totalCobroFiado + totalVentaNueva);
-  if (totalCobroFiado < 0.01) {
+  const cobro = round2(Math.max(0, totalCobroFiado));
+  const venta = round2(Math.max(0, totalVentaNueva));
+  if (cobro < 0.01) {
     return { pagosFiado: null, pagosVenta: { ...montosPorMetodo } };
   }
-  if (totalVentaNueva < 0.01) {
+  if (venta < 0.01) {
     return { pagosFiado: { ...montosPorMetodo }, pagosVenta: null };
   }
 
-  const frac = totalCobroFiado / total;
+  const cashOrder = ['efectivo', 'transferencia', 'tarjeta'];
   const pagosFiado = {};
   const pagosVenta = {};
+  let cubiertoCobro = 0;
 
-  for (const [metodo, monto] of Object.entries(montosPorMetodo || {})) {
-    const v = round2(monto);
-    if (v <= 0) continue;
-    if (metodo === 'fiado') {
-      pagosVenta.fiado = round2((pagosVenta.fiado || 0) + v);
-      continue;
+  for (const k of cashOrder) {
+    let left = round2(montosPorMetodo?.[k] || 0);
+    if (left <= 0) continue;
+    const faltaCobro = round2(cobro - cubiertoCobro);
+    if (faltaCobro > 0.001) {
+      const take = round2(Math.min(left, faltaCobro));
+      pagosFiado[k] = take;
+      cubiertoCobro = round2(cubiertoCobro + take);
+      left = round2(left - take);
     }
-    const pf = round2(v * frac);
-    const pv = round2(v - pf);
-    if (pf > 0) pagosFiado[metodo] = round2((pagosFiado[metodo] || 0) + pf);
-    if (pv > 0) pagosVenta[metodo] = round2((pagosVenta[metodo] || 0) + pv);
+    if (left > 0.001) {
+      pagosVenta[k] = round2((pagosVenta[k] || 0) + left);
+    }
   }
 
-  return { pagosFiado, pagosVenta };
+  const restoCobro = round2(cobro - cubiertoCobro);
+  if (restoCobro > 0.001) pagosFiado.fiado = restoCobro;
+
+  const cashVenta = round2(cashOrder.reduce((s, k) => s + (pagosVenta[k] || 0), 0));
+  const restoVenta = round2(venta - cashVenta);
+  if (restoVenta > 0.001) pagosVenta.fiado = restoVenta;
+
+  return {
+    pagosFiado: Object.keys(pagosFiado).length ? pagosFiado : null,
+    pagosVenta: Object.keys(pagosVenta).length ? pagosVenta : null
+  };
 }
 
 /**
@@ -133,16 +187,23 @@ export class Venta {
         raw.promo_unidades != null && raw.promo_unidades !== ''
           ? Number(raw.promo_unidades)
           : null;
+      const subtotalHint =
+        raw.subtotal != null && raw.subtotal !== '' ? round2(raw.subtotal) : null;
+      const promoTotalHint =
+        raw.promo_total != null && raw.promo_total !== '' ? round2(raw.promo_total) : null;
       lineasPre.push({
         producto_id,
         cantidad,
         precio_unitario: raw.precio_unitario,
+        subtotal_hint: subtotalHint != null && Number.isFinite(subtotalHint) ? subtotalHint : null,
         promo_id: raw.promo_id != null && raw.promo_id !== '' ? Number(raw.promo_id) : null,
         promo_nombre: raw.promo_nombre != null ? String(raw.promo_nombre).trim() : null,
         promo_unidades:
           promoUnidadesRaw != null && !Number.isNaN(promoUnidadesRaw) && promoUnidadesRaw > 0
             ? round4(promoUnidadesRaw)
             : null,
+        promo_total:
+          promoTotalHint != null && Number.isFinite(promoTotalHint) ? promoTotalHint : null,
         es_cobro_fiado: Boolean(raw.es_cobro_fiado),
         fiado_id:
           raw.fiado_id != null && raw.fiado_id !== '' ? Number(raw.fiado_id) : null
@@ -231,7 +292,14 @@ export class Venta {
           }
         }
 
-        const subtotalLinea = line.cantidad * precio;
+        let subtotalLinea = round2(line.cantidad * precio);
+        if (
+          line.subtotal_hint != null &&
+          Math.abs(line.subtotal_hint - subtotalLinea) <= 0.05
+        ) {
+          subtotalLinea = line.subtotal_hint;
+          if (line.cantidad > 0) precio = round4(subtotalLinea / line.cantidad);
+        }
         totalImporte += subtotalLinea;
 
         let promoNombre = line.promo_nombre || null;
@@ -259,10 +327,13 @@ export class Venta {
           promo_id: line.promo_id,
           promo_nombre: promoNombre,
           promo_unidades: line.promo_unidades,
+          promo_total: line.promo_total,
           es_cobro_fiado: esCobroFiado,
           fiado_id: line.fiado_id
         });
       }
+
+      cerrarCentavosGruposPromo(detalle);
 
       const detalleVenta = detalle.filter((d) => !d.es_cobro_fiado);
       const detalleCobroFiado = detalle.filter((d) => d.es_cobro_fiado);
@@ -304,7 +375,10 @@ export class Venta {
         }
       }
 
-      const merged = mergeMontosPorMetodo(Array.isArray(pagos) ? pagos : []);
+      const merged = ajustarFiadoComoResto(
+        mergeMontosPorMetodo(Array.isArray(pagos) ? pagos : []),
+        totalRed
+      );
       const clavesPago = Object.keys(merged);
 
       let metodoPago;

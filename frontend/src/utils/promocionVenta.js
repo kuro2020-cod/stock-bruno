@@ -2,8 +2,27 @@ import { fmtCantidadStock, redondearCantidad } from './unidades'
 import { productoNoControlaStock, MAX_CANTIDAD_SIN_STOCK } from './stockProducto'
 
 const round2 = (n) => Math.round(Number(n) * 100) / 100
+const round4 = (n) => Math.round(Number(n) * 10000) / 10000
 
 const numQ = (q) => (q === '' || q === null || q === undefined ? 0 : Number(q))
+
+/** Reparte un total exacto entre líneas: qty * unitario (4 dec) suma el total. */
+function allocarTotalEnLineas(lineas, totalObjetivo) {
+  const target = round2(totalObjetivo)
+  let assigned = 0
+  return lineas.map((l, i) => {
+    const isLast = i === lineas.length - 1
+    const parte = isLast ? round2(target - assigned) : round2(Number(l.cantidad) * Number(l.precioHint || 0))
+    if (!isLast) assigned = round2(assigned + parte)
+    const qty = Number(l.cantidad) || 0
+    return {
+      producto_id: l.producto_id,
+      cantidad: l.cantidad,
+      precio_unitario: qty > 0 ? round4(parte / qty) : 0,
+      subtotal: parte
+    }
+  })
+}
 
 /**
  * Reparte el precio total de la promo (precio_promocional) entre las líneas de stock.
@@ -14,7 +33,7 @@ export function calcPreciosLineasPromo(promo, items) {
     cantidad: Number(it.cantidad),
     precioLista: Number(it.producto_precio_venta ?? it.precio_venta ?? 0),
     precioUnitFijo:
-      it.precio_unitario != null && it.precio_unitario !== '' ? round2(Number(it.precio_unitario)) : null
+      it.precio_unitario != null && it.precio_unitario !== '' ? Number(it.precio_unitario) : null
   }))
 
   if (lineas.length === 0) return []
@@ -24,12 +43,19 @@ export function calcPreciosLineasPromo(promo, items) {
   const todosConPrecioFijo = lineas.every((l) => l.precioUnitFijo != null && !Number.isNaN(l.precioUnitFijo))
   if (todosConPrecioFijo) {
     const sumaFija = round2(lineas.reduce((s, l) => s + l.cantidad * l.precioUnitFijo, 0))
-    if (totalPromo <= 0 || Math.abs(sumaFija - totalPromo) <= 0.05) {
+    if (totalPromo <= 0 || Math.abs(sumaFija - totalPromo) < 0.001) {
       return lineas.map((l) => ({
         producto_id: l.producto_id,
         cantidad: l.cantidad,
-        precio_unitario: l.precioUnitFijo
+        precio_unitario: round4(l.precioUnitFijo),
+        subtotal: round2(l.cantidad * l.precioUnitFijo)
       }))
+    }
+    if (Math.abs(sumaFija - totalPromo) <= 0.05) {
+      return allocarTotalEnLineas(
+        lineas.map((l) => ({ ...l, precioHint: l.precioUnitFijo })),
+        totalPromo
+      )
     }
   }
 
@@ -37,17 +63,20 @@ export function calcPreciosLineasPromo(promo, items) {
     return lineas.map((l) => ({
       producto_id: l.producto_id,
       cantidad: l.cantidad,
-      precio_unitario: round2(l.precioLista)
+      precio_unitario: round4(l.precioLista),
+      subtotal: round2(l.cantidad * l.precioLista)
     }))
   }
 
   if (lineas.length === 1) {
     const l = lineas[0]
+    const qty = Number(l.cantidad) || 0
     return [
       {
         producto_id: l.producto_id,
         cantidad: l.cantidad,
-        precio_unitario: round2(totalPromo / l.cantidad)
+        precio_unitario: qty > 0 ? round4(totalPromo / qty) : 0,
+        subtotal: totalPromo
       }
     ]
   }
@@ -57,11 +86,10 @@ export function calcPreciosLineasPromo(promo, items) {
 
   if (sumLista <= 0) {
     const porLinea = totalPromo / lineas.length
-    return lineas.map((l) => ({
-      producto_id: l.producto_id,
-      cantidad: l.cantidad,
-      precio_unitario: round2(porLinea / l.cantidad)
-    }))
+    return allocarTotalEnLineas(
+      lineas.map((l) => ({ ...l, precioHint: l.cantidad > 0 ? porLinea / l.cantidad : 0 })),
+      totalPromo
+    )
   }
 
   let assigned = 0
@@ -69,10 +97,12 @@ export function calcPreciosLineasPromo(promo, items) {
     const isLast = i === lineas.length - 1
     const parte = isLast ? round2(totalPromo - assigned) : round2((subtotales[i] / sumLista) * totalPromo)
     assigned = round2(assigned + parte)
+    const qty = Number(l.cantidad) || 0
     return {
       producto_id: l.producto_id,
       cantidad: l.cantidad,
-      precio_unitario: round2(parte / l.cantidad)
+      precio_unitario: qty > 0 ? round4(parte / qty) : 0,
+      subtotal: parte
     }
   })
 }
@@ -142,7 +172,8 @@ export function lineaCarritoPromoEmpaquetada(promo, productos) {
       producto_id: Number(it.producto_id),
       cantidad: Number(it.cantidad),
       precio_unitario:
-        pr.precio_unitario != null && !Number.isNaN(pr.precio_unitario) ? pr.precio_unitario : 0
+        pr.precio_unitario != null && !Number.isNaN(pr.precio_unitario) ? pr.precio_unitario : 0,
+      subtotal: pr.subtotal != null && !Number.isNaN(pr.subtotal) ? pr.subtotal : null
     }
   })
 
@@ -193,16 +224,27 @@ export function itemsVentaDesdeCarrito(cart) {
     if (packs <= 0) continue
 
     if (l.es_linea_promo && l.promo_detalle_stock?.length) {
-      for (const d of l.promo_detalle_stock) {
+      const totalPack = round2(packs * (Number(l.precio_unitario) || 0))
+      const detalles = l.promo_detalle_stock
+      let assigned = 0
+      detalles.forEach((d, idx) => {
+        const qty = redondearCantidad(packs * Number(d.cantidad), 4)
+        const isLast = idx === detalles.length - 1
+        const subtotal = isLast
+          ? round2(totalPack - assigned)
+          : round2(qty * Number(d.precio_unitario || 0))
+        if (!isLast) assigned = round2(assigned + subtotal)
         out.push({
           producto_id: d.producto_id,
-          cantidad: redondearCantidad(packs * Number(d.cantidad), 4),
-          precio_unitario: d.precio_unitario,
+          cantidad: qty,
+          precio_unitario: qty > 0 ? round4(subtotal / qty) : 0,
+          subtotal,
           promo_id: l.promo_id ?? null,
           promo_nombre: l.promo_nombre || l.nombre || null,
-          promo_unidades: packs
+          promo_unidades: packs,
+          promo_total: totalPack
         })
-      }
+      })
     } else {
       out.push({
         producto_id: l.producto_id,
