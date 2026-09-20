@@ -2,8 +2,12 @@ import { useEffect, useState } from 'react'
 import { usuariosAPI } from '../services/api'
 import { Plus, Edit, Trash2, Users } from 'lucide-react'
 import UsuarioModal from '../components/UsuarioModal'
+import { useAuth } from '../context/AuthContext'
+import { esRolAdmin, esRolSuper, rolVisible } from '../utils/roles'
 
 const Usuarios = () => {
+  const { user } = useAuth()
+  const soySuper = esRolSuper(user?.rol)
   const [usuarios, setUsuarios] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(null)
@@ -61,6 +65,8 @@ const Usuarios = () => {
     loadUsuarios()
   }
 
+  const visibles = soySuper ? usuarios : usuarios.filter((u) => !esRolSuper(u.rol))
+
   if (loading) {
     return <div className="text-center py-12">Cargando usuarios...</div>
   }
@@ -85,7 +91,7 @@ const Usuarios = () => {
         </div>
       )}
 
-      {!loadError && usuarios.length === 0 ? (
+      {!loadError && visibles.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-12 text-center">
           <Users className="mx-auto text-gray-400 mb-4" size={48} />
           <p className="text-gray-600">No hay usuarios registrados</p>
@@ -111,7 +117,7 @@ const Usuarios = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {usuarios.map((u) => (
+                {visibles.map((u) => (
                   <tr key={u.id} className="hover:bg-gray-50">
                     <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {u.apellido}, {u.nombre}
@@ -121,36 +127,40 @@ const Usuarios = () => {
                     <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          u.rol === 'ADMIN'
+                          esRolAdmin(u.rol)
                             ? 'bg-purple-100 text-purple-800'
                             : u.rol === 'EXTERNO'
                               ? 'bg-teal-100 text-teal-800'
                               : 'bg-gray-100 text-gray-800'
                         }`}
                       >
-                        {u.rol}
+                        {rolVisible(u.rol)}
                       </span>
                     </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-700 hidden md:table-cell">
                       {u.acceso_externo === false ? 'No' : 'Sí'}
                     </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-sm">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(u)}
-                        className="text-indigo-600 hover:text-indigo-900 p-2"
-                        title="Editar"
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(u.id)}
-                        className="text-red-600 hover:text-red-900 p-2"
-                        title="Eliminar"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                      {(soySuper || !esRolSuper(u.rol)) && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(u)}
+                            className="text-indigo-600 hover:text-indigo-900 p-2"
+                            title="Editar"
+                          >
+                            <Edit size={18} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(u.id)}
+                            className="text-red-600 hover:text-red-900 p-2"
+                            title="Eliminar"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}

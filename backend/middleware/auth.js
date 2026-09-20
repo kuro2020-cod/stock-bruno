@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Usuario } from '../models/Usuario.js';
 import { esAccesoDesdeFuera, esAccesoLimitado, rutaBloqueadaSinVentas } from '../utils/accesoRed.js';
+import { esRolAdmin } from '../utils/roles.js';
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'dev-cambiar-en-produccion';
 
@@ -38,7 +39,7 @@ export async function authenticate(req, res, next) {
 }
 
 export function requireAdmin(req, res, next) {
-  if (req.user?.rol !== 'ADMIN') {
+  if (!esRolAdmin(req.user?.rol)) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   next();

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Calendar, Truck, Plus, Trash2 } from 'lucide-react'
 import { pagosProveedoresAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
+import { esRolAdmin } from '../utils/roles'
 import { hoyLocalISO } from '../utils/fechas'
 
 const METODOS = [
@@ -51,7 +52,7 @@ const etiquetaRangoFechas = (desde, hasta) => {
 
 const PagoProveedores = () => {
   const { user } = useAuth()
-  const esAdmin = user?.rol === 'ADMIN'
+  const esAdmin = esRolAdmin(user?.rol)
   const [desde, setDesde] = useState(() => hoyLocalISO())
   const [hasta, setHasta] = useState(() => hoyLocalISO())
   const [lista, setLista] = useState([])

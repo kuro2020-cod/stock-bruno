@@ -1,6 +1,7 @@
 import db from '../database/db.js';
 import { fechaLocalISO, normalizarFechaISO } from '../utils/fechaCaja.js';
 import { esUsuarioVendedor } from '../utils/usuarioAliases.js';
+import { esRolAdmin } from '../utils/roles.js';
 
 const round2 = (n) => Math.round(Number(n) * 100) / 100;
 
@@ -93,7 +94,7 @@ export class AperturaCaja {
       throw new Error('Usuario no identificado');
     }
 
-    const esAdmin = String(authUser.rol || '').toUpperCase() === 'ADMIN';
+    const esAdmin = esRolAdmin(authUser.rol);
     const uid = usuarioIdParaCaja(authUser);
     let m = round2(monto);
 

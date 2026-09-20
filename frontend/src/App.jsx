@@ -30,6 +30,7 @@ import Pedidos from './pages/Pedidos'
 import Vencimientos from './pages/Vencimientos'
 import LoadingScreen from './components/ui/LoadingScreen'
 import { esAccesoLimitado, rutaHome } from './utils/acceso'
+import { esRolAdmin } from './utils/roles'
 
 function AppRoutes() {
   const { user, loading } = useAuth()
@@ -57,7 +58,7 @@ function AppRoutes() {
         <Route
           path="/"
           element={
-            user.rol === 'ADMIN' ? <Dashboard /> : <Navigate to={home} replace />
+            esRolAdmin(user.rol) ? <Dashboard /> : <Navigate to={home} replace />
           }
         />
         <Route

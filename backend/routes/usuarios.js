@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const usuario = await Usuario.update(req.params.id, req.body);
+    const usuario = await Usuario.update(req.params.id, req.body, req.user);
     if (!usuario) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
@@ -47,11 +47,7 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    const usuario = await Usuario.getById(req.params.id);
-    if (!usuario) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
-    }
-    await Usuario.delete(req.params.id);
+    await Usuario.delete(req.params.id, req.user);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });

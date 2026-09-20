@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { estadisticasAPI } from '../services/api'
 import { DollarSign, Package, TrendingUp, Calendar, Users } from 'lucide-react'
+import { esRolAdmin } from '../utils/roles'
 
 const PERIODOS = [
   { value: 'dia', label: 'Día', descripcion: 'Movimientos de salida registrados hoy' },
@@ -189,12 +190,12 @@ const Estadisticas = () => {
                           {row.rol ? (
                             <span
                               className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                                row.rol === 'ADMIN'
+                                esRolAdmin(row.rol)
                                   ? 'bg-violet-100 text-violet-800'
                                   : 'bg-slate-100 text-slate-700'
                               }`}
                             >
-                              {row.rol === 'ADMIN' ? 'Admin' : 'Vendedor'}
+                              {esRolAdmin(row.rol) ? 'Admin' : 'Vendedor'}
                             </span>
                           ) : (
                             '—'

@@ -1,3 +1,5 @@
+import { esRolAdmin } from './roles'
+
 function esHostnameLocalOPrivado(hostname) {
   const h = String(hostname || '').toLowerCase()
   if (!h || h === 'localhost' || h === '127.0.0.1' || h === '::1') return true
@@ -22,7 +24,7 @@ export function esAccesoLimitado(user) {
 
 /** Inicio según rol. Desde afuera no hay módulo de Ventas. */
 export function rutaHome(user) {
-  const admin = String(user?.rol || '').toUpperCase() === 'ADMIN'
+  const admin = esRolAdmin(user?.rol)
   if (esAccesoLimitado(user)) return admin ? '/' : '/faltantes'
   return admin ? '/' : '/ventas'
 }

@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { Banknote, Calendar, CheckCircle2, Printer, AlertCircle } from 'lucide-react'
 import { cierreCajaAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
+import { esRolAdmin } from '../utils/roles'
 import { hoyLocalISO } from '../utils/fechas'
 import { claseMontoNeto, extraRubroCierre, SUBTITULO_RUBROS_CIERRE } from '../utils/cierreCajaDisplay'
 import ContadorCafeMaquina from '../components/ContadorCafeMaquina'
@@ -50,7 +51,7 @@ const TarjetaMetodo = ({ titulo, subtitulo, metodos, keys, colorClass = 'text-gr
 const CierreCaja = () => {
   const location = useLocation()
   const { marcarCajaCerrada, cajaBloqueada, user } = useAuth()
-  const esAdmin = user?.rol === 'ADMIN'
+  const esAdmin = esRolAdmin(user?.rol)
   const [fecha, setFecha] = useState(() => hoyLocalISO())
   const [resumen, setResumen] = useState(null)
   const [loading, setLoading] = useState(true)

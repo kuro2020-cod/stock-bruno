@@ -16,6 +16,7 @@ import CategoriaProductoSelect from '../components/CategoriaProductoSelect'
 import { hoyLocalISO } from '../utils/fechas'
 import { fmtCantidadStock } from '../utils/unidades'
 import { useAuth } from '../context/AuthContext'
+import { esRolAdmin } from '../utils/roles'
 
 const STOCK_PAGE_SIZE = 10
 
@@ -49,7 +50,7 @@ const parseEmailsUi = (raw) => {
 
 const Faltantes = () => {
   const { user } = useAuth()
-  const isAdmin = user?.rol === 'ADMIN'
+  const isAdmin = esRolAdmin(user?.rol)
   const hoy = hoyLocalISO()
   const [tab, setTab] = useState('registros')
   const [desde, setDesde] = useState(hoy)

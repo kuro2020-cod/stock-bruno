@@ -5,6 +5,7 @@ import { fechaLocalISO, normalizarFechaISO } from '../utils/fechaCaja.js';
 import { getResumenCaja, aplicarAjusteFondoCaja } from '../services/resumenCaja.js';
 import { AperturaCaja } from '../models/AperturaCaja.js';
 import { esUsuarioVendedor } from '../utils/usuarioAliases.js';
+import { esRolAdmin } from '../utils/roles.js';
 
 const router = express.Router();
 
@@ -189,7 +190,7 @@ router.post('/cerrar', async (req, res) => {
     }
 
     const fondoRaw = req.body.fondo_siguiente;
-    const esAdmin = String(req.user?.rol || '').toUpperCase() === 'ADMIN';
+    const esAdmin = esRolAdmin(req.user?.rol);
     // USER siempre deja el mismo monto de apertura; solo ADMIN puede cambiarlo.
     const fondo = !esAdmin
       ? round2(apertura.monto_apertura)

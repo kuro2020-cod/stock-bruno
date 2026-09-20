@@ -1,14 +1,8 @@
 import db from '../database/db.js';
 import bcrypt from 'bcryptjs';
+import { esRolSuper, normalizeRol, rolAsignable } from '../utils/roles.js';
 
 const SALT_ROUNDS = 10;
-
-function normalizeRol(rol) {
-  const r = String(rol || '').trim().toUpperCase();
-  if (r === 'ADMIN') return 'ADMIN';
-  if (r === 'EXTERNO') return 'EXTERNO';
-  return 'USER';
-}
 
 function asBool(v, def = true) {
   if (v === undefined || v === null) return def;
@@ -108,24 +102,31 @@ export class Usuario {
         dniNorm,
         usuarioNorm,
         hash,
-        normalizeRol(rol),
+        rolAsignable(rol),
         accesoExterno
       ]
     );
     return this.getById(result.lastID);
   }
 
-  static async update(id, data) {
+  static async update(id, data, actor = null) {
     const existente = await db.get('SELECT * FROM usuario WHERE id = ?', [id]);
     if (!existente) {
       throw new Error('Usuario no encontrado');
+    }
+
+    if (esRolSuper(existente.rol) && !esRolSuper(actor?.rol)) {
+      throw new Error('No se puede modificar este usuario');
     }
 
     const nombre = data.nombre?.trim() ?? existente.nombre;
     const apellido = data.apellido?.trim() ?? existente.apellido;
     const dni = data.dni?.trim() ?? existente.dni;
     const usuario = (data.usuario?.trim() ?? existente.usuario).toLowerCase();
-    const rol = normalizeRol(data.rol ?? existente.rol);
+    const rol = rolAsignable(data.rol ?? existente.rol, {
+      actorRol: actor?.rol,
+      rolActual: existente.rol
+    });
     const accesoExterno = asBool(
       data.acceso_externo ?? data.accesoExterno ?? existente.acceso_externo,
       true
@@ -170,7 +171,14 @@ export class Usuario {
     return this.getById(id);
   }
 
-  static async delete(id) {
+  static async delete(id, actor = null) {
+    const existente = await db.get('SELECT rol FROM usuario WHERE id = ?', [id]);
+    if (!existente) {
+      throw new Error('Usuario no encontrado');
+    }
+    if (esRolSuper(existente.rol) && !esRolSuper(actor?.rol)) {
+      throw new Error('No se puede eliminar este usuario');
+    }
     await db.run('DELETE FROM usuario WHERE id = ?', [id]);
     return { success: true };
   }

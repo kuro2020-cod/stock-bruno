@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { promocionesAPI, productosAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
+import { esRolAdmin } from '../utils/roles'
 import {
   TIPOS_PROMOCION,
   claseColorTipo,
@@ -18,7 +19,7 @@ import { esAccesoLimitado } from '../utils/acceso'
 const Promociones = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const esAdmin = user?.rol === 'ADMIN'
+  const esAdmin = esRolAdmin(user?.rol)
   const sinVentas = esAccesoLimitado(user)
   const [promociones, setPromociones] = useState([])
   const [productos, setProductos] = useState([])

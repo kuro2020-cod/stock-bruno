@@ -39,12 +39,13 @@ import { fmtMoney, lineasTotalesCierre, lineasRubrosCierre, extraRubroCierre, cl
 import ArqueoParcialModal from './ArqueoParcialModal'
 import AlertaVencimientos from './AlertaVencimientos'
 import { esAccesoLimitado } from '../utils/acceso'
+import { esRolAdmin, rolVisible } from '../utils/roles'
 
 const Layout = ({ children }) => {
   const location = useLocation()
   const { user, logout, cajaBloqueada: cajaSesion, cierreTurno } = useAuth()
   const { isDark, toggleTheme } = useTheme()
-  const isAdmin = user?.rol === 'ADMIN'
+  const isAdmin = esRolAdmin(user?.rol)
   const limitado = esAccesoLimitado(user)
   const cajaBloqueada = !limitado && cajaSesion
   const [isDesktop, setIsDesktop] = useState(() =>
@@ -273,8 +274,8 @@ const Layout = ({ children }) => {
               {user?.rol === 'EXTERNO'
                 ? 'EXTERNO'
                 : limitado
-                  ? `${user?.rol} · remoto`
-                  : user?.rol}
+                  ? `${rolVisible(user?.rol)} · remoto`
+                  : rolVisible(user?.rol)}
             </span>
             {cajaBloqueada && (
               <p className="mt-2 text-[10px] font-bold uppercase tracking-wide text-amber-300 bg-amber-500/20 border border-amber-400/30 px-2 py-1 rounded-lg">

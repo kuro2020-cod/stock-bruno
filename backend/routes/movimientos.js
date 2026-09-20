@@ -2,6 +2,7 @@ import express from 'express';
 import { Movimiento } from '../models/Movimiento.js';
 import { PagoProveedor } from '../models/PagoProveedor.js';
 import { requireAdmin } from '../middleware/auth.js';
+import { esRolAdmin } from '../utils/roles.js';
 
 const router = express.Router();
 
@@ -77,7 +78,7 @@ router.get('/producto/:productoId', requireAdmin, async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const tipo = String(req.body?.tipo || '').toLowerCase();
-    if (tipo === 'baja' && req.user?.rol !== 'ADMIN') {
+    if (tipo === 'baja' && !esRolAdmin(req.user?.rol)) {
       return res.status(403).json({ error: 'Solo un administrador puede registrar bajas de productos' });
     }
 

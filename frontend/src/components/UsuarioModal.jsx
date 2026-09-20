@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { usuariosAPI } from '../services/api'
 import { X } from 'lucide-react'
+import { esRolAdmin } from '../utils/roles'
 
 const emptyForm = {
   nombre: '',
@@ -24,7 +25,7 @@ const UsuarioModal = ({ usuario, onClose }) => {
         dni: usuario.dni || '',
         usuario: usuario.usuario || '',
         clave: '',
-        rol: usuario.rol === 'ADMIN' ? 'ADMIN' : usuario.rol === 'EXTERNO' ? 'EXTERNO' : 'USER',
+        rol: esRolAdmin(usuario.rol) ? 'ADMIN' : usuario.rol === 'EXTERNO' ? 'EXTERNO' : 'USER',
         acceso_externo: usuario.acceso_externo !== false && usuario.accesoExterno !== false
       })
     } else {

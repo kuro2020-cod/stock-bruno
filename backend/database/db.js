@@ -327,7 +327,7 @@ const initDatabase = async () => {
         usuario VARCHAR(100) NOT NULL UNIQUE,
         clave VARCHAR(255) NOT NULL,
         rol VARCHAR(20) NOT NULL DEFAULT 'USER'
-          CHECK (rol IN ('ADMIN', 'USER', 'EXTERNO')),
+          CHECK (rol IN ('ADMIN', 'USER', 'EXTERNO', 'SUPER')),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -342,7 +342,7 @@ const initDatabase = async () => {
       ADD COLUMN IF NOT EXISTS rol VARCHAR(20) DEFAULT 'USER'
     `);
 
-    // Bases ya creadas: ampliar CHECK de rol para incluir EXTERNO
+    // Bases ya creadas: ampliar CHECK de rol para incluir EXTERNO y SUPER
     const rolChecks = await query(`
       SELECT DISTINCT con.conname
       FROM pg_constraint con
@@ -358,7 +358,7 @@ const initDatabase = async () => {
     await query(`
       ALTER TABLE usuario
       ADD CONSTRAINT usuario_rol_check
-      CHECK (rol IN ('ADMIN', 'USER', 'EXTERNO'))
+      CHECK (rol IN ('ADMIN', 'USER', 'EXTERNO', 'SUPER'))
     `);
 
     await query(`
