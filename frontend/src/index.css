@@ -173,6 +173,17 @@ body {
       dark:bg-slate-900 dark:border-slate-700/80 dark:shadow-none;
   }
 
+  .modal-scrim {
+    background: rgba(6, 10, 18, 0.42);
+    -webkit-backdrop-filter: blur(16px) saturate(0.55);
+    backdrop-filter: blur(16px) saturate(0.55);
+    animation: modal-scrim-in 200ms ease-out;
+  }
+
+  html.dark .modal-scrim {
+    background: rgba(2, 6, 14, 0.55);
+  }
+
   .loading-screen {
     @apply min-h-screen flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-slate-50 via-brand-50/30 to-indigo-50/40
       dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950;
@@ -181,6 +192,15 @@ body {
   .loading-spinner {
     @apply w-10 h-10 rounded-full border-[3px] border-brand-200 border-t-brand-600 animate-spin
       dark:border-brand-800 dark:border-t-brand-400;
+  }
+}
+
+@keyframes modal-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 

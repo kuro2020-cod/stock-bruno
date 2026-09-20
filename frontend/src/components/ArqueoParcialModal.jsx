@@ -80,7 +80,7 @@ const ArqueoParcialModal = ({ open, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/50"
+      className="modal-scrim fixed inset-0 z-[90] flex items-center justify-center p-4"
       onClick={onClose}
       role="presentation"
     >

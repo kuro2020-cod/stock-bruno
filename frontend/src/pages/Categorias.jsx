@@ -153,7 +153,7 @@ const Categorias = () => {
       )}
 
       {vistaProductos && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+        <div className="modal-scrim fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[85vh] flex flex-col"
             role="dialog"

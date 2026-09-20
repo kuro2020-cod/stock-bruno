@@ -831,7 +831,7 @@ const ProductoModal = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[110] p-4">
+    <div className="modal-scrim fixed inset-0 flex items-center justify-center z-[110] p-4">
       {card}
     </div>
   )

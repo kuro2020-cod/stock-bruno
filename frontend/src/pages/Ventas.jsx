@@ -2337,7 +2337,7 @@ const Ventas = () => {
 
       {envaseModal && (
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/45"
+          className="modal-scrim fixed inset-0 z-[90] flex items-center justify-center p-4"
           onClick={cerrarEnvaseModal}
           role="presentation"
         >
@@ -2436,7 +2436,7 @@ const Ventas = () => {
 
       {entregaEnvaseModal && (
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/45"
+          className="modal-scrim fixed inset-0 z-[90] flex items-center justify-center p-4"
           onClick={cerrarEntregaEnvaseModal}
           role="presentation"
         >
@@ -2510,7 +2510,7 @@ const Ventas = () => {
 
       {showConsultar && (
         <div
-          className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/45"
+          className="modal-scrim fixed inset-0 z-[80] flex items-center justify-center p-4"
           onClick={cerrarConsultar}
           role="presentation"
         >

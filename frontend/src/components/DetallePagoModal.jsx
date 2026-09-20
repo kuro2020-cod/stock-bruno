@@ -48,7 +48,7 @@ export default function DetallePagoModal({
 
   return (
     <div
-      className="fixed inset-0 z-[110] flex justify-center sm:items-center bg-black/55 sm:p-4"
+      className="modal-scrim fixed inset-0 z-[110] flex justify-center sm:items-center sm:p-4"
       onClick={onClose}
       role="presentation"
     >

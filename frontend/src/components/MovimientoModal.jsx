@@ -78,7 +78,7 @@ const MovimientoModal = ({ producto, onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="modal-scrim fixed inset-0 flex items-center justify-center z-50 p-4">
       <div className="modal-panel max-w-md">
         <div className="flex justify-between items-start gap-3 p-4 sm:p-6 border-b">
           <h3 className="text-xl font-semibold text-gray-800">

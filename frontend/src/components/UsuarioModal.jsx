@@ -74,7 +74,7 @@ const UsuarioModal = ({ usuario, onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="modal-scrim fixed inset-0 flex items-center justify-center z-50 p-4">
       <div className="modal-panel max-w-lg">
         <div className="flex justify-between items-center p-4 sm:p-6 border-b sticky top-0 bg-white">
           <h3 className="text-xl font-semibold text-gray-800">

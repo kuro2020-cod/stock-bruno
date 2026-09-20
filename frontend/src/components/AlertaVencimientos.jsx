@@ -85,7 +85,7 @@ const AlertaVencimientos = () => {
 
       {abierto && (
         <div
-          className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/50"
+          className="modal-scrim fixed inset-0 z-[95] flex items-center justify-center p-4"
           onClick={() => setAbierto(false)}
           role="presentation"
         >

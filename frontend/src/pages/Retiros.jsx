@@ -194,7 +194,7 @@ const Retiros = () => {
 
       {confirmacion && (
         <div
-          className="fixed inset-0 z-[95] flex justify-center sm:items-center bg-black/50 sm:p-4"
+          className="modal-scrim fixed inset-0 z-[95] flex justify-center sm:items-center sm:p-4"
           onClick={cancelarConfirmacion}
           role="presentation"
         >

@@ -538,7 +538,7 @@ const Pedidos = () => {
 
       {showPreview && (
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/45"
+          className="modal-scrim fixed inset-0 z-[90] flex items-center justify-center p-4"
           onClick={() => !enviando && setShowPreview(false)}
           role="presentation"
         >

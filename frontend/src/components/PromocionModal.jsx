@@ -254,7 +254,7 @@ const PromocionModal = ({ promocion, onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="modal-scrim fixed inset-0 flex items-center justify-center z-50 p-4">
       <div className="modal-panel max-w-2xl">
         <div className="flex justify-between items-center p-4 sm:p-6 border-b">
           <h3 className="text-xl font-semibold text-gray-800">

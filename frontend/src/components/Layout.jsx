@@ -220,7 +220,7 @@ const Layout = ({ children }) => {
       {sidebarOpen && !isDesktop && (
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px] print:hidden md:hidden"
+          className="modal-scrim fixed inset-0 z-40 print:hidden md:hidden"
           aria-label="Cerrar menú"
           onClick={cerrarMenuMovil}
         />
@@ -427,7 +427,7 @@ const Layout = ({ children }) => {
           </button>
         </header>
         {cajaBloqueada && (
-          <div className="absolute inset-0 z-30 flex items-start justify-center bg-slate-900/50 backdrop-blur-sm print:hidden p-4 pt-20 sm:p-6 sm:pt-16 overflow-y-auto">
+          <div className="modal-scrim absolute inset-0 z-30 flex items-start justify-center print:hidden p-4 pt-20 sm:p-6 sm:pt-16 overflow-y-auto">
             <div className="max-w-lg w-full card p-5 sm:p-8 text-center shadow-card animate-slide-up border-amber-200/60 dark:border-amber-500/30">
               <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center mb-4">
                 <Lock className="text-amber-600 dark:text-amber-300" size={28} />
