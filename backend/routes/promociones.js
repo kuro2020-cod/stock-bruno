@@ -34,7 +34,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', requireAdmin, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const promocion = await Promocion.create(req.body);
     res.status(201).json(promocion);
@@ -43,7 +43,7 @@ router.post('/', requireAdmin, async (req, res) => {
   }
 });
 
-router.put('/:id', requireAdmin, async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const promocion = await Promocion.update(req.params.id, req.body);
     res.json(promocion);

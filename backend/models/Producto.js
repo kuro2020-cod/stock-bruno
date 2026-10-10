@@ -19,6 +19,8 @@ function diasHasta(hoyISO, fechaISO) {
   return Math.round((b - a) / 86400000);
 }
 
+const round4 = (n) => Math.round(Number(n) * 10000) / 10000;
+
 function esFlagActivo(v) {
   if (v === true || v === 1) return true;
   if (v === false || v === 0 || v == null || v === '') return false;
@@ -189,19 +191,38 @@ export class Producto {
       throw new Error('Los precios no pueden ser negativos');
     }
 
-    const tocarStock = Object.prototype.hasOwnProperty.call(productoData, 'stock_actual');
+    const tocarStock =
+      Object.prototype.hasOwnProperty.call(productoData, 'stock_actual') &&
+      stock_actual !== undefined;
+    const tieneBase =
+      Object.prototype.hasOwnProperty.call(productoData, 'stock_base') &&
+      productoData.stock_base !== undefined &&
+      productoData.stock_base !== null &&
+      productoData.stock_base !== '';
     const tocarMinimo = Object.prototype.hasOwnProperty.call(productoData, 'stock_minimo');
-    const sa = noControla
-      ? 0
-      : tocarStock
-        ? Number(stock_actual)
-        : Number(productoExistente.stock_actual);
+    // Si el formulario no cambió el stock, no se reescribe: una carga hecha por otro
+    // usuario en el medio no se pierde al guardar precios, categoría o vencimiento.
+    let delta = null;
+    let absoluto = null;
+    if (!noControla && tocarStock && tieneBase) {
+      const nuevo = Number(stock_actual);
+      const base = Number(productoData.stock_base);
+      if (Number.isNaN(nuevo) || Number.isNaN(base)) {
+        throw new Error('El stock no puede ser negativo');
+      }
+      delta = round4(nuevo - base);
+    } else if (!noControla && tocarStock) {
+      absoluto = Number(stock_actual);
+      if (Number.isNaN(absoluto) || absoluto < 0) {
+        throw new Error('El stock no puede ser negativo');
+      }
+    }
     const sm = noControla
       ? 0
       : tocarMinimo
         ? Number(stock_minimo)
         : Number(productoExistente.stock_minimo);
-    if (Number.isNaN(sa) || Number.isNaN(sm) || sa < 0 || sm < 0) {
+    if (Number.isNaN(sm) || sm < 0) {
       throw new Error('El stock no puede ser negativo');
     }
 
@@ -210,15 +231,54 @@ export class Producto {
       ? (categoria_id === '' || categoria_id == null ? null : categoria_id)
       : productoExistente.categoria_id;
 
-    await db.run(`
-      UPDATE productos
-      SET codigo = ?, nombre = ?, descripcion = ?, categoria_id = ?, 
-          precio_compra = ?, precio_venta = ?, stock_actual = ?, 
-          stock_minimo = ?, unidad_medida = ?, no_controla_stock = ?,
-          no_verifica_vencimiento = ?, fecha_vencimiento = ?,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `, [codigo || null, nombre.trim(), descripcion?.trim() || null, catId, precio_compra || 0, precio_venta || 0, sa, sm, unidad_medida || 'unidad', noControla, noVerifica, fechaVenc, id]);
+    await db.transaction(async ({ get, run }) => {
+      const locked = await get(
+        `SELECT stock_actual FROM productos WHERE id = ? FOR UPDATE`,
+        [id]
+      );
+      if (!locked) {
+        throw new Error('Producto no encontrado');
+      }
+      let sa;
+      if (noControla) {
+        sa = 0;
+      } else if (delta != null) {
+        sa = round4(Number(locked.stock_actual) + delta);
+      } else if (absoluto != null) {
+        sa = absoluto;
+      } else {
+        sa = Number(locked.stock_actual);
+      }
+      if (Number.isNaN(sa) || sa < 0) {
+        throw new Error('El stock no puede ser negativo');
+      }
+      await run(
+        `
+        UPDATE productos
+        SET codigo = ?, nombre = ?, descripcion = ?, categoria_id = ?,
+            precio_compra = ?, precio_venta = ?, stock_actual = ?,
+            stock_minimo = ?, unidad_medida = ?, no_controla_stock = ?,
+            no_verifica_vencimiento = ?, fecha_vencimiento = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `,
+        [
+          codigo || null,
+          nombre.trim(),
+          descripcion?.trim() || null,
+          catId,
+          precio_compra || 0,
+          precio_venta || 0,
+          sa,
+          sm,
+          unidad_medida || 'unidad',
+          noControla,
+          noVerifica,
+          fechaVenc,
+          id
+        ]
+      );
+    });
 
     return this.getById(id);
   }

@@ -150,28 +150,26 @@ const Promociones = () => {
               Cargar en Ventas
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => {
+              setSelected(p)
+              setShowModal(true)
+            }}
+            className="p-2 text-indigo-700 hover:bg-white/50 rounded-lg ml-auto"
+            title="Editar"
+          >
+            <Edit size={18} />
+          </button>
           {esAdmin && (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelected(p)
-                  setShowModal(true)
-                }}
-                className="p-2 text-indigo-700 hover:bg-white/50 rounded-lg ml-auto"
-                title="Editar"
-              >
-                <Edit size={18} />
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDelete(p.id)}
-                className="p-2 text-red-700 hover:bg-white/50 rounded-lg"
-                title="Eliminar"
-              >
-                <Trash2 size={18} />
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={() => handleDelete(p.id)}
+              className="p-2 text-red-700 hover:bg-white/50 rounded-lg"
+              title="Eliminar"
+            >
+              <Trash2 size={18} />
+            </button>
           )}
         </div>
       </div>
@@ -193,22 +191,21 @@ const Promociones = () => {
           <p className="text-gray-600 mt-2">
             Armá combos manuales (hamburguesas, fiambre, pre-pizzas, maples de huevos). Al vender, elegí la promo y se
             cargan todos los productos en Ventas descontando stock.
-            {esAdmin ? ' Creá y editá desde acá.' : ''}
+            {' '}
+            Cualquier usuario puede crearlas y modificarlas.
           </p>
         </div>
-        {esAdmin && (
-          <button
-            type="button"
-            onClick={() => {
-              setSelected(null)
-              setShowModal(true)
-            }}
-            className="btn-primary shrink-0"
-          >
-            <Plus size={20} />
-            Nueva promoción
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => {
+            setSelected(null)
+            setShowModal(true)
+          }}
+          className="btn-primary shrink-0"
+        >
+          <Plus size={20} />
+          Nueva promoción
+        </button>
       </div>
 
       <div className="bg-white rounded-lg shadow p-4 mb-6 flex flex-wrap items-center gap-3">
@@ -246,18 +243,16 @@ const Promociones = () => {
               ? 'No hay promociones que coincidan con el filtro.'
               : 'No hay promociones registradas.'}
           </p>
-          {esAdmin && (
-            <button
-              type="button"
-              onClick={() => {
-                setSelected(null)
-                setShowModal(true)
-              }}
-              className="mt-4 text-brand-600 hover:underline text-sm font-medium"
-            >
-              Crear la primera promoción
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              setSelected(null)
+              setShowModal(true)
+            }}
+            className="mt-4 text-brand-600 hover:underline text-sm font-medium"
+          >
+            Crear la primera promoción
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -265,7 +260,7 @@ const Promociones = () => {
         </div>
       )}
 
-      {showModal && esAdmin && <PromocionModal promocion={selected} onClose={handleCloseModal} />}
+      {showModal && <PromocionModal promocion={selected} onClose={handleCloseModal} />}
     </div>
   )
 }

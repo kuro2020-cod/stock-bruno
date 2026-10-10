@@ -84,6 +84,8 @@ const ProductoModal = ({
   /** El código ya existe en BD: el nombre se toma y bloquea para no desfasar con el código */
   const [codigoExisteEnBd, setCodigoExisteEnBd] = useState(false)
   const [productoExistenteId, setProductoExistenteId] = useState(null)
+  /** Stock que tenía el producto al abrir el formulario. Sirve para no pisar una carga hecha por otro usuario. */
+  const [stockBase, setStockBase] = useState(0)
   const camposTocadosRef = useRef(new Set())
   const codigoConsultaRef = useRef('')
 
@@ -108,6 +110,8 @@ const ProductoModal = ({
   useEffect(() => {
     loadCategorias()
     if (producto) {
+      const base = Number(producto.stock_actual)
+      setStockBase(Number.isFinite(base) ? base : 0)
       setFormData({
         codigo: producto.codigo || '',
         nombre: producto.nombre || '',
@@ -315,17 +319,22 @@ const ProductoModal = ({
 
       if (producto || productoExistenteId) {
         const idEditar = producto?.id || productoExistenteId
-        await productosAPI.update(idEditar, {
-          ...formData,
+        const { stock_actual, ...sinStock } = formData
+        const payload = {
+          ...sinStock,
           precio_compra: precioCompra,
           precio_venta: precioVenta,
           no_controla_stock: noControla,
           no_verifica_vencimiento: noVerifica,
-          stock_actual: noControla ? 0 : Number(formData.stock_actual) || 0,
           stock_minimo: noControla ? 0 : Number(formData.stock_minimo) || 0,
           categoria_id: catId,
           fecha_vencimiento: fechaVenc
-        })
+        }
+        if (producto) {
+          payload.stock_base = stockBase
+          payload.stock_actual = noControla ? 0 : Number(stock_actual) || 0
+        }
+        await productosAPI.update(idEditar, payload)
         onSaved?.()
         onClose()
         return
